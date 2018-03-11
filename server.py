@@ -9,9 +9,6 @@ import sys
 from player import Player
 from collections import deque
 
-AREA_WIDTH = 78
-AREA_HEIGHT = 25
-
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", type=int, help="port number to connect to")
 parser.add_argument("-i", "--ip", help="ip address to connect to")

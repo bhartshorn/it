@@ -5,6 +5,7 @@ import time
 import threading
 import argparse
 import pygame
+from pygame import gfxdraw
 from player import Player
 from collections import deque
 
@@ -57,17 +58,49 @@ class NetworkThread(threading.Thread):
 def game_loop(screen, send_q, recv_q):
     global quit
     clock = pygame.time.Clock()
-    lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+
+    # Colors -- maybe should be elsewhere? dunno
+    colors = {'1': pygame.Color("#83CC67"),
+              '2': pygame.Color("#CB66C5"),
+              '3': pygame.Color("#B83D4E"),
+              '4': pygame.Color("#F61EC6"),
+              '5': pygame.Color("#1EEAF6"),
+              '6': pygame.Color("#1E96F6"),
+              '7': pygame.Color("#F6EA1E"),
+              '8': pygame.Color("#F68C1E"),
+              'scores_border': pygame.Color("#9B9B9B"),
+              'white': pygame.Color("white")}
+
+    # Set up play area surface
+    bg_play = pygame.Color("black")
+    screen.fill(bg_play)
+
+    # Set up scores surface
     scores_surface = pygame.Surface((200, 600))
-    bg_play = pygame.Color("#474747")
-    bg_scores = pygame.Color("black")
-    dia_circle_outer = 10
-    dia_circle_inner = 5
+    bg_scores = pygame.Color("#575757")
+    scores_surface.fill(bg_scores)
+    score_x = 12
+
+    # Set up font for scores
+    lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+    font_height = lib_sans.get_height()
+    font_offset = font_height + 5
+
+    # Set up scores header
+    lib_sans.set_underline(True)
+    scores_header = lib_sans.render("scores", True, colors['white'])
+    lib_sans.set_underline(False)
+    offset_scores_header = (200 - scores_header.get_width()) / 2
+
+    # Set up circle parameters
+    circle_radius = 10
+    circle_radius_inner = 5
+
+    # Game state
     players = {}
-    last_command = ""
     my_id = 1
 
-    screen.fill(bg_play)
+
 
     while not quit:
         screen.fill(bg_play)
@@ -103,37 +136,37 @@ def game_loop(screen, send_q, recv_q):
                     new_player = Player(p_id)
                     players[p_id] = new_player
 
-        last_command = command
-        #print(command)
-
-        font_height = lib_sans.get_height()
-        score_y = font_height + 5
-        score_x = 5
+        score_y = font_offset
 
         for i, p in players.viewitems():
-            if (i == my_id):
-                player_color = pygame.Color("blue")
-            else:
-                player_color = pygame.Color("red")
-
+            # Draw player on screen
             if (p.has_ball):
-                player_color = pygame.Color("green")
+                draw_x = (p.loc_x * circle_radius)
+                draw_y = (p.loc_y * circle_radius)
+                pygame.draw.rect(screen, colors[str(i)], [draw_x, draw_y, circle_radius * 2, circle_radius * 2])
+                pygame.draw.rect(screen, bg_play, [draw_x + (circle_radius / 2), draw_y + (circle_radius / 2), circle_radius, circle_radius])
+            else:
+                draw_x = (p.loc_x * circle_radius) + circle_radius
+                draw_y = (p.loc_y * circle_radius) + circle_radius
+
+                # Yeah... this is harder than it needs to be!
+                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
+                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
+                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
+                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
+
 
             # Draw player's score
-            player_score = "{:<4} {:>4}".format(i, p.num_points)
-            scores_surface.blit(lib_sans.render(player_score, True, player_color), (score_x, score_y))
+            scores_surface.blit(lib_sans.render(str(i), True, colors[str(i)]), (score_x, score_y))
+            score = lib_sans.render(str(p.num_points), True, colors['white'])
+            scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
 
-            # Draw player on screen
-            draw_x = (p.loc_x * dia_circle_outer) + dia_circle_outer
-            draw_y = (p.loc_y * dia_circle_outer) + dia_circle_outer
-            pygame.draw.circle(screen, player_color, [draw_x, draw_y], dia_circle_outer, dia_circle_inner)
 
             #update score y loc
-            score_y = score_y + font_height + 5
+            score_y = score_y + font_offset
 
-        lib_sans.set_underline(True)
-        scores_surface.blit(lib_sans.render("SCORES", True, pygame.Color("white")), (score_x, 5))
-        lib_sans.set_underline(False)
+        pygame.draw.line(scores_surface, colors['scores_border'], [0, 0], [0, 600], 5)
+        scores_surface.blit(scores_header, (offset_scores_header, 5))
         screen.blit(scores_surface, (600, 0))
         # Refresh the screen
         pygame.display.update()
