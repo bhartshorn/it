@@ -1,10 +1,10 @@
-import curses
 import socket
 import string
 import select
 import time
 import threading
 import argparse
+import pygame
 from player import Player
 from collections import deque
 
@@ -54,70 +54,40 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
-
-def game_loop(stdscr, send_q, recv_q):
+def game_loop(screen, send_q, recv_q):
     global quit
+    clock = pygame.time.Clock()
+    lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+    scores_surface = pygame.Surface((200, 600))
+    bg_play = pygame.Color("#474747")
+    bg_scores = pygame.Color("black")
+    dia_circle_outer = 10
+    dia_circle_inner = 5
     players = {}
-    k = 0
     last_command = ""
     my_id = 1
 
-    # Clear and refresh the screen for a blank canvas
-    stdscr.erase()
-    stdscr.refresh()
-    stdscr.nodelay(True)
-    height, width = stdscr.getmaxyx()
+    screen.fill(bg_play)
 
-    game_window = stdscr.subwin(28, 80, 0, 0)
-    scores_window = stdscr.subwin(28, width - 80, 0, 80)
-
-    # Start colors in curses
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK) 
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_WHITE)
-
-    curses.curs_set(0)
-    #curses.resizeterm(28, 80)
-
-    # Loop where k is the last character pressed
     while not quit:
-        # get next input
-        k = stdscr.getch()
-        move = ""
+        screen.fill(bg_play)
+        scores_surface.fill(bg_scores)
+        command = ""
 
-        # Initialization
-        game_window.erase()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
+                send_q.append("q:{}\n".format(my_id))
+                quit = True
 
-        if k == curses.KEY_DOWN or k == ord('j'):
-            move = "d"
-        elif k == curses.KEY_UP or k == ord('k'):
-            move = "u"
-        elif k == curses.KEY_RIGHT or k == ord('l'):
-            move = "r"
-        elif k == curses.KEY_LEFT or k == ord('h'):
-            move = "l"
-        elif k == ord('p'):
-            prompt_message = "Please enter the 'Character' you would like to be"
-            prompt = stdscr.subwin(3,len(prompt_message) + 4, 13, 10)
-            prompt.attron(curses.color_pair(1))
-            prompt.border()
-            prompt.attroff(curses.color_pair(1))
-            prompt.addstr(1,2, prompt_message)
-            prompt.refresh()
-            c = -1
-            while (c > 126 or c < 33):
-                c = prompt.getch()
-            send_q.append("c:{}:{}\n".format(my_id, chr(c)))
-
-        elif k == ord('q'):
-            send_q.append("q:{}\n".format(my_id))
-            quit = True
-
-        if move != "":
-            send_q.append("m:{}:{}\n".format(my_id, move))
-
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
+            send_q.append("m:{}:l\n".format(my_id))
+        if pressed[pygame.K_RIGHT] or pressed[pygame.K_l]: 
+            send_q.append("m:{}:r\n".format(my_id))
+        if pressed[pygame.K_UP] or pressed[pygame.K_k]:
+            send_q.append("m:{}:u\n".format(my_id))
+        if pressed[pygame.K_DOWN] or pressed[pygame.K_j]:
+            send_q.append("m:{}:d\n".format(my_id))
 
         while len(recv_q) > 0:
             command = string.split(recv_q.popleft(), ":")
@@ -133,42 +103,42 @@ def game_loop(stdscr, send_q, recv_q):
                     new_player = Player(p_id)
                     players[p_id] = new_player
 
-            last_command = command
+        last_command = command
+        #print(command)
 
-        #create statusbar string
-        statusbarstr = "Press 'q' to exit | ID: {} | Command: {}".format(my_id, last_command)
-        # Render status bar
-        game_window.attron(curses.color_pair(3))
-        game_window.addstr(26, 1, statusbarstr)
-        game_window.addstr(26, len(statusbarstr) + 1, " " * (79 - len(statusbarstr)))
-        game_window.attroff(curses.color_pair(3)) 
-        game_window.border()
-        game_window.addstr(0, 2, "GAME")
+        font_height = lib_sans.get_height()
+        score_y = font_height + 5
+        score_x = 5
 
-        scores_window.border()
-        scores_window.addstr(0, 2, "SCORES")
-        scores_next_y = 1
-        #render Players
         for i, p in players.viewitems():
             if (i == my_id):
-                player_color = curses.color_pair(2)
+                player_color = pygame.Color("blue")
             else:
-                player_color = curses.color_pair(0)
+                player_color = pygame.Color("red")
 
             if (p.has_ball):
-                player_color = player_color | curses.A_REVERSE
+                player_color = pygame.Color("green")
 
-            game_window.addstr(p.loc_y+1, p.loc_x+1, p.player_char, player_color)
-            scores_window.addstr(scores_next_y, 2, "{}: {}".format(i, p.num_points))
-            scores_next_y += 1
+            # Draw player's score
+            player_score = "{:<4} {:>4}".format(i, p.num_points)
+            scores_surface.blit(lib_sans.render(player_score, True, player_color), (score_x, score_y))
 
+            # Draw player on screen
+            draw_x = (p.loc_x * dia_circle_outer) + dia_circle_outer
+            draw_y = (p.loc_y * dia_circle_outer) + dia_circle_outer
+            pygame.draw.circle(screen, player_color, [draw_x, draw_y], dia_circle_outer, dia_circle_inner)
+
+            #update score y loc
+            score_y = score_y + font_height + 5
+
+        lib_sans.set_underline(True)
+        scores_surface.blit(lib_sans.render("SCORES", True, pygame.Color("white")), (score_x, 5))
+        lib_sans.set_underline(False)
+        screen.blit(scores_surface, (600, 0))
         # Refresh the screen
-        game_window.refresh()
-        scores_window.refresh()
-        time.sleep(0.005)
+        pygame.display.update()
+        clock.tick(10)
 
-    # When game loop is finished
-    exit()
 
 def main():
     # set up socket parameters
@@ -180,6 +150,10 @@ def main():
     if args.ip:
         ip = args.ip
 
+    # set up pygame
+    pygame.init()
+    game_window = pygame.display.set_mode((800, 600))
+
     # set up the socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #TODO: Attempt connecting on higher ports automatically -- The Unix Way?
@@ -190,7 +164,8 @@ def main():
     network_thread = NetworkThread(sock, send_q, recv_q)
     network_thread.start()
 
-    curses.wrapper(game_loop, send_q, recv_q)
+    game_loop(game_window, send_q, recv_q)
+    #curses.wrapper(game_loop, send_q, recv_q)
 
     sock.close()
 

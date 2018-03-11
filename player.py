@@ -1,7 +1,7 @@
 import time
 
-AREA_WIDTH = 78
-AREA_HEIGHT = 25
+AREA_WIDTH = 59
+AREA_HEIGHT = 59
 
 class Player:
     player_id = -1
