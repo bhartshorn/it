@@ -42,7 +42,10 @@ class NetworkThread(threading.Thread):
 
     def recieve(self):
         # TODO: try-catch
-        buffer = self.recv_buf + self.sock.recv(2048)
+        try:
+            buffer = self.recv_buf + self.sock.recv(2048)
+        except socket.error as msg:
+            print("Could not receive, ", msg)
         if len(buffer) == 0:
             return
 

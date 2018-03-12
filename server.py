@@ -35,6 +35,8 @@ class ClientThread(threading.Thread):
     def __init__(self, client_sock, address, id):
         threading.Thread.__init__(self)
         self.sock = client_sock
+        # self.sock.setblocking(0)
+        self.sock.settimeout(0.01)
         self.address = address
         self.id = id
         self.recv_q = deque()
@@ -45,12 +47,13 @@ class ClientThread(threading.Thread):
         # TODO: try-catch
         try:
             buffer = self.recv_buf + self.sock.recv(2048)
+        except socket.timeout as msg:
+            return True
         except socket.error as msg:
-            print("Could not recieve, socket closed")
+            print("Could not recieve, socket closed", msg)
             return False
-
         if len(buffer) == 0:
-            return
+            return True
 
         self.recv_buf = ""
         split = string.split(buffer)
@@ -173,7 +176,7 @@ def main():
 
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((ip, port))
-    server_sock.settimeout(0.5)
+    server_sock.settimeout(1.5)
     server_sock.listen(10)
 
     # TODO: Create thread to send updates to all clients at the same time
