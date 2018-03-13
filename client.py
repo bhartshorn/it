@@ -15,6 +15,28 @@ parser.add_argument("-i", "--ip", help="ip address to connect to")
 args = parser.parse_args()
 quit = False
 
+#5BB668
+#B6815B
+#B6635B
+#B6B35B
+#92B65B
+#5BABB6
+#B65BA9
+#715BB6
+
+# Colors -- maybe should be elsewhere? dunno
+colors = {'1': pygame.Color("#5BB668"),
+          '2': pygame.Color("#B6815B"),
+          '3': pygame.Color("#B6635B"),
+          '4': pygame.Color("#B6B35B"),
+          '5': pygame.Color("#92B65B"),
+          '6': pygame.Color("#5BABB6"),
+          '7': pygame.Color("#B65BA9"),
+          '8': pygame.Color("#715BB6"),
+          'bg_menu': pygame.Color("#575757"),
+          'scores_border': pygame.Color("#9B9B9B"),
+          'white': pygame.Color("white")}
+
 class NetworkThread(threading.Thread):
     recv_buf = ""
 
@@ -58,21 +80,38 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
+def color_menu(screen, clock, send_q):
+    menu_surface = pygame.Surface((400, 300))
+    menu_surface.fill(colors['scores_border'])
+
+    close = False
+    while not close:
+        menu_surface.fill(colors['scores_border'])
+        pygame.draw.rect(menu_surface, colors['bg_menu'], [3, 3, 394, 294])
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
+                #send_q.append("q:{}\n".format(my_id))
+                close = True
+
+        screen.blit(menu_surface, (200, 150))
+        pygame.display.update()
+        clock.tick(10)
+
+def make_button(label, font):
+    text = font.render(label, 1, colors['scores_border'])
+    button_surface = pygame.Surface((100, text.get_height() + 16))
+    button_surface.fill(colors['scores_border'])
+    pygame.draw.rect(button_surface, colors['bg_menu'], [2, 2, button_surface.get_width() - 4, button_surface.get_height() - 4])
+
+    button_surface.blit(text, ((100 - text.get_width()) / 2, 8))
+
+    return button_surface
+
+
 def game_loop(screen, send_q, recv_q):
     global quit
     clock = pygame.time.Clock()
-
-    # Colors -- maybe should be elsewhere? dunno
-    colors = {'1': pygame.Color("#83CC67"),
-              '2': pygame.Color("#CB66C5"),
-              '3': pygame.Color("#B83D4E"),
-              '4': pygame.Color("#F61EC6"),
-              '5': pygame.Color("#1EEAF6"),
-              '6': pygame.Color("#1E96F6"),
-              '7': pygame.Color("#F6EA1E"),
-              '8': pygame.Color("#F68C1E"),
-              'scores_border': pygame.Color("#9B9B9B"),
-              'white': pygame.Color("white")}
 
     # Set up play area surface
     bg_play = pygame.Color("black")
@@ -95,6 +134,9 @@ def game_loop(screen, send_q, recv_q):
     lib_sans.set_underline(False)
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
+    lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
+    color_button = make_button('color', lib_sans_small)
+
     # Set up circle parameters
     circle_radius = 10
     circle_radius_inner = 5
@@ -102,8 +144,6 @@ def game_loop(screen, send_q, recv_q):
     # Game state
     players = {}
     my_id = 1
-
-
 
     while not quit:
         screen.fill(bg_play)
@@ -114,6 +154,8 @@ def game_loop(screen, send_q, recv_q):
             if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
                 send_q.append("q:{}\n".format(my_id))
                 quit = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                color_menu(screen, clock, send_q)
 
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
@@ -170,6 +212,7 @@ def game_loop(screen, send_q, recv_q):
 
         pygame.draw.line(scores_surface, colors['scores_border'], [0, 0], [0, 600], 5)
         scores_surface.blit(scores_header, (offset_scores_header, 5))
+        scores_surface.blit(color_button, (50, 500))
         screen.blit(scores_surface, (600, 0))
         # Refresh the screen
         pygame.display.update()
