@@ -55,21 +55,21 @@ class GuiButton():
         else:
             surface.blit(self.button_n, (self.pos[0], self.pos[1]))
 
-    def test_pos(self, pos):
+    def test_mouse(self, pos):
         x_loc = pos[0]
         y_loc = pos[1]
 
         if x_loc < self.pos[0] or x_loc > self.pos[0] + self.button_n.get_width():
-            print('Button Normal X')
+            #print('Button Normal X')
             self.highlighted = False
             return False
 
         if y_loc < self.pos[1] or y_loc > self.pos[1] + self.button_n.get_height():
-            print('Button Normal Y')
+            #print('Button Normal Y')
             self.highlighted = False
             return False
 
-        print('Button Highlighted')
+        #print('Button Highlighted')
         self.highlighted = True
         return True
 
@@ -116,20 +116,26 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
-def color_menu(screen, clock, send_q):
-    menu_surface = pygame.Surface((400, 300))
+def color_menu(screen, font, clock, send_q):
+    menu_width = 400
+    menu_height = 350
+    menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
+    ok_button = GuiButton('ok', (470, 445), font)
 
     close = False
     while not close:
         menu_surface.fill(colors['scores_border'])
-        pygame.draw.rect(menu_surface, colors['bg_menu'], [3, 3, 394, 294])
+        pygame.draw.rect(menu_surface, colors['bg_menu'], [3, 3, menu_width - 6, menu_height - 6])
 
         for event in pygame.event.get():
-            if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
-                print(event)
-                #send_q.append("q:{}\n".format(my_id))
+            if event.type == pygame.QUIT:
                 close = True
+            elif event.type == pygame.MOUSEBUTTONDOWN and ok_button.test_mouse(event.pos):
+                close = True
+            elif event.type == pygame.MOUSEMOTION:
+                ok_button.test_mouse(event.pos)
+
         for i in range(1, 9):
             index = str(i)
             n = i - 1
@@ -142,6 +148,7 @@ def color_menu(screen, clock, send_q):
             pygame.draw.rect(menu_surface, colors[index], [x_pos, y_pos, 70, 70])
 
         screen.blit(menu_surface, (200, 150))
+        ok_button.draw(screen)
         pygame.display.update()
         clock.tick(10)
 
@@ -155,7 +162,7 @@ def make_button(label, font):
 
     return button_surface
 
-def test_pos(pos, rect):
+def test_mouse(pos, rect):
     x_loc = pos[0]
     y_loc = pos[1]
 
@@ -194,7 +201,7 @@ def game_loop(screen, send_q, recv_q):
 
     lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
     color_button = GuiButton('color', (650, 500), lib_sans_small)
-    #color_button = make_button('color', lib_sans_small)
+    quit_button = GuiButton('quit', (650, 550), lib_sans_small)
 
     # Set up circle parameters
     circle_radius = 10
@@ -214,14 +221,14 @@ def game_loop(screen, send_q, recv_q):
                 send_q.append("q:{}\n".format(my_id))
                 quit = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                #print(event)
-                #if test_pos(event.pos, (650, 500, color_button.get_width(), color_button.get_height())):
-                if color_button.test_pos(event.pos):
-                    color_menu(screen, clock, send_q)
+                if quit_button.test_mouse(event.pos):
+                    quit = True
+                elif color_button.test_mouse(event.pos):
+                    color_menu(screen, lib_sans_small, clock, send_q)
+                    color_button.test_mouse((0, 0))
             elif event.type == pygame.MOUSEMOTION:
-                #print(event)
-                #if test_pos(event.pos, (650, 500, color_button.get_width(), color_button.get_height())):
-                color_button.test_pos(event.pos)
+                color_button.test_mouse(event.pos)
+                quit_button.test_mouse(event.pos)
 
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
@@ -280,10 +287,11 @@ def game_loop(screen, send_q, recv_q):
         scores_surface.blit(scores_header, (offset_scores_header, 5))
         screen.blit(scores_surface, (600, 0))
         color_button.draw(screen)
+        quit_button.draw(screen)
         #screen.blit(color_button, (650, 500))
         # Refresh the screen
         pygame.display.update()
-        clock.tick(10)
+        clock.tick(15)
 
 
 def main():
