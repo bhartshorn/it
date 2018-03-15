@@ -15,27 +15,63 @@ parser.add_argument("-i", "--ip", help="ip address to connect to")
 args = parser.parse_args()
 quit = False
 
-#5BB668
-#B6815B
-#B6635B
-#B6B35B
-#92B65B
-#5BABB6
-#B65BA9
-#715BB6
+# Colors
+colors = {'1':              pygame.Color("#5BB668"),
+          '2':              pygame.Color("#B6815B"),
+          '3':              pygame.Color("#B6635B"),
+          '4':              pygame.Color("#B6B35B"),
+          '5':              pygame.Color("#92B65B"),
+          '6':              pygame.Color("#5BABB6"),
+          '7':              pygame.Color("#B65BA9"),
+          '8':              pygame.Color("#715BB6"),
+          'bg_menu':        pygame.Color("#575757"),
+          'scores_border':  pygame.Color("#9B9B9B"),
+          'white':          pygame.Color("#FFFFFF")}
 
-# Colors -- maybe should be elsewhere? dunno
-colors = {'1': pygame.Color("#5BB668"),
-          '2': pygame.Color("#B6815B"),
-          '3': pygame.Color("#B6635B"),
-          '4': pygame.Color("#B6B35B"),
-          '5': pygame.Color("#92B65B"),
-          '6': pygame.Color("#5BABB6"),
-          '7': pygame.Color("#B65BA9"),
-          '8': pygame.Color("#715BB6"),
-          'bg_menu': pygame.Color("#575757"),
-          'scores_border': pygame.Color("#9B9B9B"),
-          'white': pygame.Color("white")}
+class GuiButton():
+    def __init__(self, label, pos, font):
+        self.label = label
+        self.pos = pos
+        self.font = font
+        self.highlighted = False
+
+        self.text_n = font.render(label, 1, colors['scores_border'])
+        self.button_n = pygame.Surface((100, self.text_n.get_height() + 16))
+        self.button_n.fill(colors['scores_border'])
+        pygame.draw.rect(self.button_n, colors['bg_menu'], [2, 2, self.button_n.get_width() - 4, self.button_n.get_height() - 4])
+
+        self.button_n.blit(self.text_n, ((100 - self.text_n.get_width()) / 2, 8))
+
+        self.text_h = font.render(label, 1, colors['white'])
+        self.button_h = pygame.Surface((100, self.text_h.get_height() + 16))
+        self.button_h.fill(colors['white'])
+        pygame.draw.rect(self.button_h, colors['bg_menu'], [2, 2, self.button_h.get_width() - 4, self.button_h.get_height() - 4])
+
+        self.button_h.blit(self.text_h, ((100 - self.text_h.get_width()) / 2, 8))
+
+    def draw(self, surface):
+        if self.highlighted:
+            surface.blit(self.button_h, (self.pos[0], self.pos[1]))
+        else:
+            surface.blit(self.button_n, (self.pos[0], self.pos[1]))
+
+    def test_pos(self, pos):
+        x_loc = pos[0]
+        y_loc = pos[1]
+
+        if x_loc < self.pos[0] or x_loc > self.pos[0] + self.button_n.get_width():
+            print('Button Normal X')
+            self.highlighted = False
+            return False
+
+        if y_loc < self.pos[1] or y_loc > self.pos[1] + self.button_n.get_height():
+            print('Button Normal Y')
+            self.highlighted = False
+            return False
+
+        print('Button Highlighted')
+        self.highlighted = True
+        return True
 
 class NetworkThread(threading.Thread):
     recv_buf = ""
@@ -91,8 +127,19 @@ def color_menu(screen, clock, send_q):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT or event.type == pygame.MOUSEBUTTONDOWN:
+                print(event)
                 #send_q.append("q:{}\n".format(my_id))
                 close = True
+        for i in range(1, 9):
+            index = str(i)
+            n = i - 1
+
+            col = n % 4
+            row = n / 4
+
+            x_pos = (col * 70 + col * 20) + 30
+            y_pos = ((n / 4) * 90) + 110
+            pygame.draw.rect(menu_surface, colors[index], [x_pos, y_pos, 70, 70])
 
         screen.blit(menu_surface, (200, 150))
         pygame.display.update()
@@ -107,6 +154,17 @@ def make_button(label, font):
     button_surface.blit(text, ((100 - text.get_width()) / 2, 8))
 
     return button_surface
+
+def test_pos(pos, rect):
+    x_loc = pos[0]
+    y_loc = pos[1]
+
+    if x_loc < rect[0] or x_loc > rect[0] + rect[2]:
+        return False
+    if y_loc < rect[1] or y_loc > rect[1] + rect[3]:
+        return False
+
+    return True
 
 
 def game_loop(screen, send_q, recv_q):
@@ -135,7 +193,8 @@ def game_loop(screen, send_q, recv_q):
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
     lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
-    color_button = make_button('color', lib_sans_small)
+    color_button = GuiButton('color', (650, 500), lib_sans_small)
+    #color_button = make_button('color', lib_sans_small)
 
     # Set up circle parameters
     circle_radius = 10
@@ -155,7 +214,14 @@ def game_loop(screen, send_q, recv_q):
                 send_q.append("q:{}\n".format(my_id))
                 quit = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                color_menu(screen, clock, send_q)
+                #print(event)
+                #if test_pos(event.pos, (650, 500, color_button.get_width(), color_button.get_height())):
+                if color_button.test_pos(event.pos):
+                    color_menu(screen, clock, send_q)
+            elif event.type == pygame.MOUSEMOTION:
+                #print(event)
+                #if test_pos(event.pos, (650, 500, color_button.get_width(), color_button.get_height())):
+                color_button.test_pos(event.pos)
 
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
@@ -212,8 +278,9 @@ def game_loop(screen, send_q, recv_q):
 
         pygame.draw.line(scores_surface, colors['scores_border'], [0, 0], [0, 600], 5)
         scores_surface.blit(scores_header, (offset_scores_header, 5))
-        scores_surface.blit(color_button, (50, 500))
         screen.blit(scores_surface, (600, 0))
+        color_button.draw(screen)
+        #screen.blit(color_button, (650, 500))
         # Refresh the screen
         pygame.display.update()
         clock.tick(10)
