@@ -94,12 +94,13 @@ class NetworkThread(threading.Thread):
                 self.send()
 
     def send(self):
-        # TODO: try-catch
         while len(self.send_q) > 0:
-            self.sock.send(self.send_q.popleft())
+            try:
+                self.sock.send(self.send_q.popleft())
+            except socket.error as msg:
+                print("Could not send, ", msg)
 
     def recieve(self):
-        # TODO: try-catch
         try:
             buffer = self.recv_buf + self.sock.recv(2048)
         except socket.error as msg:
