@@ -28,21 +28,23 @@ colors = {'1':              pygame.Color("#5BB668"),
           'scores_border':  pygame.Color("#9B9B9B"),
           'white':          pygame.Color("#FFFFFF")}
 
+fonts = {}
+
 class GuiButton():
-    def __init__(self, label, pos, font):
+    def __init__(self, label, pos):
         self.label = label
         self.pos = pos
-        self.font = font
+        #self.font = font
         self.highlighted = False
 
-        self.text_n = font.render(label, 1, colors['scores_border'])
+        self.text_n = fonts['sm'].render(label, 1, colors['scores_border'])
         self.button_n = pygame.Surface((100, self.text_n.get_height() + 16))
         self.button_n.fill(colors['scores_border'])
         pygame.draw.rect(self.button_n, colors['bg_menu'], [2, 2, self.button_n.get_width() - 4, self.button_n.get_height() - 4])
 
         self.button_n.blit(self.text_n, ((100 - self.text_n.get_width()) / 2, 8))
 
-        self.text_h = font.render(label, 1, colors['white'])
+        self.text_h = fonts['sm'].render(label, 1, colors['white'])
         self.button_h = pygame.Surface((100, self.text_h.get_height() + 16))
         self.button_h.fill(colors['white'])
         pygame.draw.rect(self.button_h, colors['bg_menu'], [2, 2, self.button_h.get_width() - 4, self.button_h.get_height() - 4])
@@ -117,12 +119,12 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
-def color_menu(screen, font, clock, send_q):
+def color_menu(screen, name, clock, send_q):
     menu_width = 400
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
-    ok_button = GuiButton('ok', (470, 445), font)
+    ok_button = GuiButton('ok', (470, 445))
 
     close = False
     while not close:
@@ -132,6 +134,8 @@ def color_menu(screen, font, clock, send_q):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 close = True
+            elif event.type == pygame.KEYDOWN and (48 <= event.key <= 57 or 97 <= event.key <= 122 or event.key == pygame.K_BACKSPACE):
+                print(event)
             elif event.type == pygame.MOUSEBUTTONDOWN and ok_button.test_mouse(event.pos):
                 close = True
             elif event.type == pygame.MOUSEMOTION:
@@ -150,11 +154,16 @@ def color_menu(screen, font, clock, send_q):
 
         screen.blit(menu_surface, (200, 150))
         ok_button.draw(screen)
+
+        # Render text box
+        name_text = fonts['ui'].render(name, True, colors['white'])
+        screen.blit(name_text, (400, 175))
+
         pygame.display.update()
         clock.tick(10)
 
 def make_button(label, font):
-    text = font.render(label, 1, colors['scores_border'])
+    text = fonts['sm'].render(label, 1, colors['scores_border'])
     button_surface = pygame.Surface((100, text.get_height() + 16))
     button_surface.fill(colors['scores_border'])
     pygame.draw.rect(button_surface, colors['bg_menu'], [2, 2, button_surface.get_width() - 4, button_surface.get_height() - 4])
@@ -177,6 +186,8 @@ def test_mouse(pos, rect):
 
 def game_loop(screen, send_q, recv_q):
     global quit
+    #global lib_sans_small 
+    #global lib_sans
     clock = pygame.time.Clock()
 
     # Set up play area surface
@@ -190,19 +201,19 @@ def game_loop(screen, send_q, recv_q):
     score_x = 12
 
     # Set up font for scores
-    lib_sans = pygame.font.SysFont('Liberation Sans', 30)
-    font_height = lib_sans.get_height()
+    #lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+    font_height = fonts['ui'].get_height()
     font_offset = font_height + 5
 
     # Set up scores header
-    lib_sans.set_underline(True)
-    scores_header = lib_sans.render("scores", True, colors['white'])
-    lib_sans.set_underline(False)
+    fonts['ui'].set_underline(True)
+    scores_header = fonts['ui'].render("scores", True, colors['white'])
+    fonts['ui'].set_underline(False)
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
-    lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
-    color_button = GuiButton('color', (650, 500), lib_sans_small)
-    quit_button = GuiButton('quit', (650, 550), lib_sans_small)
+    #lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
+    color_button = GuiButton('color', (650, 500))
+    quit_button = GuiButton('quit', (650, 550))
 
     # Set up circle parameters
     circle_radius = 10
@@ -225,7 +236,7 @@ def game_loop(screen, send_q, recv_q):
                 if quit_button.test_mouse(event.pos):
                     quit = True
                 elif color_button.test_mouse(event.pos):
-                    color_menu(screen, lib_sans_small, clock, send_q)
+                    color_menu(screen, players[my_id].player_char, clock, send_q)
                     color_button.test_mouse((0, 0))
             elif event.type == pygame.MOUSEMOTION:
                 color_button.test_mouse(event.pos)
@@ -276,8 +287,8 @@ def game_loop(screen, send_q, recv_q):
 
 
             # Draw player's score
-            scores_surface.blit(lib_sans.render(str(i), True, colors[str(i)]), (score_x, score_y))
-            score = lib_sans.render(str(p.num_points), True, colors['white'])
+            scores_surface.blit(fonts['ui'].render(p.player_char, True, colors[str(i)]), (score_x, score_y))
+            score = fonts['ui'].render(str(p.num_points), True, colors['white'])
             scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
 
 
@@ -296,6 +307,8 @@ def game_loop(screen, send_q, recv_q):
 
 
 def main():
+    global fonts
+
     # set up socket parameters
     port = 11000
     ip = "localhost"
@@ -307,6 +320,9 @@ def main():
 
     # set up pygame
     pygame.init()
+    fonts['ui'] = pygame.font.SysFont('Liberation Sans', 30)
+    fonts['sm'] = pygame.font.SysFont('Liberation Sans', 16)
+
     game_window = pygame.display.set_mode((800, 600))
 
     # set up the socket
