@@ -28,6 +28,7 @@ colors = {'1':              pygame.Color("#5BB668"),
           'scores_border':  pygame.Color("#9B9B9B"),
           'white':          pygame.Color("#FFFFFF")}
 
+# To be populated in main()
 fonts = {}
 
 class GuiButton():
@@ -320,8 +321,8 @@ def main():
 
     # set up pygame
     pygame.init()
-    fonts['ui'] = pygame.font.SysFont('Liberation Sans', 30)
-    fonts['sm'] = pygame.font.SysFont('Liberation Sans', 16)
+    fonts['ui'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 30)
+    fonts['sm'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 16)
 
     game_window = pygame.display.set_mode((800, 600))
 
