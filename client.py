@@ -157,21 +157,13 @@ def color_menu(screen, name, clock, send_q):
         ok_button.draw(screen)
 
         # Render text box
+        name_label = fonts['ui'].render('name:', True, colors['scores_border'])
         name_text = fonts['ui'].render(name, True, colors['white'])
-        screen.blit(name_text, (400, 175))
+        screen.blit(name_label, (230, 185))
+        screen.blit(name_text, (230 + name_label.get_width() + 10, 185))
 
         pygame.display.update()
         clock.tick(10)
-
-def make_button(label, font):
-    text = fonts['sm'].render(label, 1, colors['scores_border'])
-    button_surface = pygame.Surface((100, text.get_height() + 16))
-    button_surface.fill(colors['scores_border'])
-    pygame.draw.rect(button_surface, colors['bg_menu'], [2, 2, button_surface.get_width() - 4, button_surface.get_height() - 4])
-
-    button_surface.blit(text, ((100 - text.get_width()) / 2, 8))
-
-    return button_surface
 
 def test_mouse(pos, rect):
     x_loc = pos[0]
