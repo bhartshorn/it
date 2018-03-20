@@ -108,7 +108,7 @@ class ClientThread(threading.Thread):
                     self.close()
                 elif input[0] == "m":
                     players[self.id].move(input)
-                elif input[0] == "c" and len(input) == 3 and input[2] != "":
+                elif input[0] == "c" and input[2] != "":
                     players[self.id].player_char= input[2]
                     print("Player {} changed character to {}".format(self.id, input[2]))
                 else:

@@ -14,6 +14,7 @@ parser.add_argument("-p", "--port", type=int, help="port number to connect to")
 parser.add_argument("-i", "--ip", help="ip address to connect to")
 args = parser.parse_args()
 quit = False
+my_id = 1
 
 # Colors
 colors = {'1':              pygame.Color("#5BB668"),
@@ -30,6 +31,43 @@ colors = {'1':              pygame.Color("#5BB668"),
 
 # To be populated in main()
 fonts = {}
+
+class ColorButton():
+    def __init__(self, color, pos):
+        self.color = color
+        self.pos = pos
+        #self.font = font
+        self.highlighted = False
+        self.cube = pygame.Surface((70, 70))
+        self.cube.fill(self.color)
+        self.cube_hl = pygame.Surface((70, 70))
+        self.cube_hl.fill(colors['white'])
+        pygame.draw.rect(self.cube_hl, self.color, [2, 2, 66, 66])
+
+    def draw(self, surface):
+        if self.highlighted:
+            surface.blit(self.cube_hl, (self.pos[0], self.pos[1]))
+        else:
+            surface.blit(self.cube, (self.pos[0], self.pos[1]))
+
+
+    def test_mouse(self, pos):
+        x_loc = pos[0]
+        y_loc = pos[1]
+
+        if x_loc < self.pos[0] or x_loc > self.pos[0] + 70:
+            #print('Button Normal X')
+            self.highlighted = False
+            return False
+
+        if y_loc < self.pos[1] or y_loc > self.pos[1] + 70:
+            #print('Button Normal Y')
+            self.highlighted = False
+            return False
+
+        #print('Button Highlighted')
+        self.highlighted = True
+        return True
 
 class GuiButton():
     def __init__(self, label, pos):
@@ -125,7 +163,19 @@ def color_menu(screen, name, clock, send_q):
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
-    ok_button = GuiButton('ok', (470, 445))
+    save_button = GuiButton('save', (470, 445))
+    color_buttons = []
+
+    for i in range(1, 9):
+        index = str(i)
+        n = i - 1
+
+        col = n % 4
+        row = n / 4
+
+        x_pos = (col * 70 + col * 20) + 230
+        y_pos = ((n / 4) * 90) + 260
+        color_buttons.append(ColorButton(colors[index], (x_pos, y_pos)))
 
     close = False
     while not close:
@@ -135,26 +185,30 @@ def color_menu(screen, name, clock, send_q):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 close = True
-            elif event.type == pygame.KEYDOWN and (48 <= event.key <= 57 or 97 <= event.key <= 122 or event.key == pygame.K_BACKSPACE):
-                print(event)
-            elif event.type == pygame.MOUSEBUTTONDOWN and ok_button.test_mouse(event.pos):
-                close = True
+            elif event.type == pygame.KEYDOWN:
+                if (48 <= event.key <= 57 or 97 <= event.key <= 122) and len(name) < 10:
+                    name = name + pygame.key.name(event.key)
+                elif event.key == pygame.K_BACKSPACE and len(name) >= 0:
+                    name = name[:-1]
+
+                print(name)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if save_button.test_mouse(event.pos):
+                    send_q.append("c:{}:{}\n".format(my_id, name))
+                    close = True
+                for button in color_buttons:
+                    button.test_mouse(event.pos)
             elif event.type == pygame.MOUSEMOTION:
-                ok_button.test_mouse(event.pos)
+                save_button.test_mouse(event.pos)
+                for button in color_buttons:
+                    button.test_mouse(event.pos)
 
-        for i in range(1, 9):
-            index = str(i)
-            n = i - 1
-
-            col = n % 4
-            row = n / 4
-
-            x_pos = (col * 70 + col * 20) + 30
-            y_pos = ((n / 4) * 90) + 110
-            pygame.draw.rect(menu_surface, colors[index], [x_pos, y_pos, 70, 70])
 
         screen.blit(menu_surface, (200, 150))
-        ok_button.draw(screen)
+        save_button.draw(screen)
+
+        for button in color_buttons:
+            button.draw(screen)
 
         # Render text box
         name_label = fonts['ui'].render('name:', True, colors['scores_border'])
@@ -200,12 +254,12 @@ def game_loop(screen, send_q, recv_q):
 
     # Set up scores header
     fonts['ui'].set_underline(True)
-    scores_header = fonts['ui'].render("scores", True, colors['white'])
+    scores_header = fonts['ui'].render("scores", True, colors['scores_border'])
     fonts['ui'].set_underline(False)
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
     #lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
-    color_button = GuiButton('color', (650, 500))
+    color_button = GuiButton('name/color', (650, 500))
     quit_button = GuiButton('quit', (650, 550))
 
     # Set up circle parameters
@@ -214,7 +268,7 @@ def game_loop(screen, send_q, recv_q):
 
     # Game state
     players = {}
-    my_id = 1
+    global my_id
 
     while not quit:
         screen.fill(bg_play)
