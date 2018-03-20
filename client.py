@@ -8,6 +8,7 @@ import pygame
 from pygame import gfxdraw
 from player import Player
 from collections import deque
+from pygame_functions import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", type=int, help="port number to connect to")
@@ -352,6 +353,44 @@ def game_loop(screen, send_q, recv_q):
         pygame.display.update()
         clock.tick(15)
 
+def port_prompt():
+    screenSize(400,185)
+    setBackgroundColour("gray")
+    
+    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular", "gray")
+    showLabel(intro_label)
+    
+
+    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular", "gray")
+    showLabel(ip_label)
+
+
+    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular", "gray")
+    showLabel(port_label)
+
+
+    ip_box = makeTextBox(195, 70, 180,0, "", 0,24)
+    port_box = makeTextBox(195, 125, 180,0, "11000", 0,24)
+    
+    showTextBox(ip_box)
+    showTextBox(port_box)
+
+    ip_entry = textBoxInput(ip_box)
+
+    if ip_entry == "localhost":
+        ip_entry = str(ip_entry)
+    else:
+        ip_entry = int(ip_entry)
+    
+    finished_ip = makeLabel(ip_entry, 34, 205, 78, "black", "LiberationsSansRegular", "clear")
+    showLabel(finished_ip)
+
+    port_entry = textBoxInput(port_box)
+    finished_port = makeLabel(port_entry, 35, 205, 132, "black", "LiberationsSansRegular", "clear")
+    showLabel(finished_port)
+
+    end()
+    return ip_entry, int(port_entry)
 
 def main():
     global fonts
@@ -359,14 +398,20 @@ def main():
     # set up socket parameters
     port = 11000
     ip = "localhost"
+
     if args.port:
         port = args.port
 
     if args.ip:
         ip = args.ip
+    else:
+        ip, port = port_prompt()
 
     # set up pygame
     pygame.init()
+
+    
+
     fonts['ui'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 30)
     fonts['sm'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 16)
 
