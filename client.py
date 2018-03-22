@@ -39,14 +39,20 @@ class ColorButton():
         self.pos = pos
         #self.font = font
         self.highlighted = False
+        self.clicked = False
         self.cube = pygame.Surface((70, 70))
         self.cube.fill(self.color)
+
         self.cube_hl = pygame.Surface((70, 70))
         self.cube_hl.fill(colors['white'])
         pygame.draw.rect(self.cube_hl, self.color, [2, 2, 66, 66])
 
+        # self.cube_a = pygame.Surface((70, 70))
+        # self.cube_a.fill(colors['scores_border'])
+        # pygame.draw.rect(self.cube_a, self.color, [2, 2, 66, 66])
+
     def draw(self, surface):
-        if self.highlighted:
+        if self.highlighted or self.clicked:
             surface.blit(self.cube_hl, (self.pos[0], self.pos[1]))
         else:
             surface.blit(self.cube, (self.pos[0], self.pos[1]))
@@ -69,6 +75,14 @@ class ColorButton():
         #print('Button Highlighted')
         self.highlighted = True
         return True
+
+    def click(self, pos):
+        if self.test_mouse(pos):
+            self.clicked = True
+            return True
+
+    def unclick(self):
+        self.clicked = False
 
 class GuiButton():
     def __init__(self, label, pos):
@@ -198,7 +212,10 @@ def color_menu(screen, name, clock, send_q):
                     send_q.append("c:{}:{}\n".format(my_id, name))
                     close = True
                 for button in color_buttons:
-                    button.test_mouse(event.pos)
+                    if button.click(event.pos):
+                        for unclick in color_buttons:
+                            if button is not unclick:
+                                unclick.unclick()
             elif event.type == pygame.MOUSEMOTION:
                 save_button.test_mouse(event.pos)
                 for button in color_buttons:
