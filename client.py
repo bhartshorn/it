@@ -5,6 +5,7 @@ import time
 import threading
 import argparse
 import pygame
+import buttons
 from pygame import gfxdraw
 from player import Player
 from collections import deque
@@ -32,102 +33,6 @@ colors = {'1':              pygame.Color("#5BB668"),
 
 # To be populated in main()
 fonts = {}
-
-class ColorButton():
-    def __init__(self, color, pos):
-        self.color = color
-        self.pos = pos
-        #self.font = font
-        self.highlighted = False
-        self.clicked = False
-        self.cube = pygame.Surface((70, 70))
-        self.cube.fill(self.color)
-
-        self.cube_hl = pygame.Surface((70, 70))
-        self.cube_hl.fill(colors['white'])
-        pygame.draw.rect(self.cube_hl, self.color, [2, 2, 66, 66])
-
-        # self.cube_a = pygame.Surface((70, 70))
-        # self.cube_a.fill(colors['scores_border'])
-        # pygame.draw.rect(self.cube_a, self.color, [2, 2, 66, 66])
-
-    def draw(self, surface):
-        if self.highlighted or self.clicked:
-            surface.blit(self.cube_hl, (self.pos[0], self.pos[1]))
-        else:
-            surface.blit(self.cube, (self.pos[0], self.pos[1]))
-
-
-    def test_mouse(self, pos):
-        x_loc = pos[0]
-        y_loc = pos[1]
-
-        if x_loc < self.pos[0] or x_loc > self.pos[0] + 70:
-            #print('Button Normal X')
-            self.highlighted = False
-            return False
-
-        if y_loc < self.pos[1] or y_loc > self.pos[1] + 70:
-            #print('Button Normal Y')
-            self.highlighted = False
-            return False
-
-        #print('Button Highlighted')
-        self.highlighted = True
-        return True
-
-    def click(self, pos):
-        if self.test_mouse(pos):
-            self.clicked = True
-            return True
-
-    def unclick(self):
-        self.clicked = False
-
-class GuiButton():
-    def __init__(self, label, pos):
-        self.label = label
-        self.pos = pos
-        #self.font = font
-        self.highlighted = False
-
-        self.text_n = fonts['sm'].render(label, 1, colors['scores_border'])
-        self.button_n = pygame.Surface((100, self.text_n.get_height() + 16))
-        self.button_n.fill(colors['scores_border'])
-        pygame.draw.rect(self.button_n, colors['bg_menu'], [2, 2, self.button_n.get_width() - 4, self.button_n.get_height() - 4])
-
-        self.button_n.blit(self.text_n, ((100 - self.text_n.get_width()) / 2, 8))
-
-        self.text_h = fonts['sm'].render(label, 1, colors['white'])
-        self.button_h = pygame.Surface((100, self.text_h.get_height() + 16))
-        self.button_h.fill(colors['white'])
-        pygame.draw.rect(self.button_h, colors['bg_menu'], [2, 2, self.button_h.get_width() - 4, self.button_h.get_height() - 4])
-
-        self.button_h.blit(self.text_h, ((100 - self.text_h.get_width()) / 2, 8))
-
-    def draw(self, surface):
-        if self.highlighted:
-            surface.blit(self.button_h, (self.pos[0], self.pos[1]))
-        else:
-            surface.blit(self.button_n, (self.pos[0], self.pos[1]))
-
-    def test_mouse(self, pos):
-        x_loc = pos[0]
-        y_loc = pos[1]
-
-        if x_loc < self.pos[0] or x_loc > self.pos[0] + self.button_n.get_width():
-            #print('Button Normal X')
-            self.highlighted = False
-            return False
-
-        if y_loc < self.pos[1] or y_loc > self.pos[1] + self.button_n.get_height():
-            #print('Button Normal Y')
-            self.highlighted = False
-            return False
-
-        #print('Button Highlighted')
-        self.highlighted = True
-        return True
 
 class NetworkThread(threading.Thread):
     recv_buf = ""
@@ -178,7 +83,7 @@ def color_menu(screen, name, clock, send_q):
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
-    save_button = GuiButton('save', (470, 445))
+    save_button = buttons.GuiButton('save', fonts['sm'], colors, (470, 445))
     color_buttons = []
 
     for i in range(1, 9):
@@ -190,7 +95,7 @@ def color_menu(screen, name, clock, send_q):
 
         x_pos = (col * 70 + col * 20) + 230
         y_pos = ((n / 4) * 90) + 260
-        color_buttons.append(ColorButton(colors[index], (x_pos, y_pos)))
+        color_buttons.append(buttons.ColorButton(colors[index], (x_pos, y_pos)))
 
     close = False
     while not close:
@@ -237,18 +142,6 @@ def color_menu(screen, name, clock, send_q):
         pygame.display.update()
         clock.tick(10)
 
-def test_mouse(pos, rect):
-    x_loc = pos[0]
-    y_loc = pos[1]
-
-    if x_loc < rect[0] or x_loc > rect[0] + rect[2]:
-        return False
-    if y_loc < rect[1] or y_loc > rect[1] + rect[3]:
-        return False
-
-    return True
-
-
 def game_loop(screen, send_q, recv_q):
     global quit
     #global lib_sans_small 
@@ -277,8 +170,8 @@ def game_loop(screen, send_q, recv_q):
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
     #lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
-    color_button = GuiButton('name/color', (650, 500))
-    quit_button = GuiButton('quit', (650, 550))
+    color_button = buttons.GuiButton('name/color', fonts['sm'], colors, (650, 500))
+    quit_button = buttons.GuiButton('quit', fonts['sm'], colors, (650, 550))
 
     # Set up circle parameters
     circle_radius = 10
@@ -421,8 +314,8 @@ def main():
 
     if args.ip:
         ip = args.ip
-    else:
-        ip, port = port_prompt()
+    #else:
+        #ip, port = port_prompt()
 
     # set up pygame
     pygame.init()
