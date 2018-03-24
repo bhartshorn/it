@@ -83,6 +83,7 @@ def color_menu(screen, name, clock, send_q):
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
+
     save_button = buttons.GuiButton('save', fonts['sm'], colors, (470, 445))
     color_buttons = []
 
@@ -136,6 +137,7 @@ def color_menu(screen, name, clock, send_q):
         # Render text box
         name_label = fonts['ui'].render('name:', True, colors['scores_border'])
         name_text = fonts['ui'].render(name, True, colors['white'])
+
         screen.blit(name_label, (230, 185))
         screen.blit(name_text, (230 + name_label.get_width() + 10, 185))
 
