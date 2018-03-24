@@ -9,6 +9,7 @@ class Player:
     lost_ball_time = 0
     num_points = 0
     player_char = "0"
+    player_color = 1
     loc_x = 0
     loc_y = 0
     last_updated = -1
@@ -38,21 +39,25 @@ class Player:
     def parse_network(self, command):
         # Command comes in as an array
         # Confirm array is correctly sized
-        if len(command) == 7 and command[6] != "" and int(command[1]) == self.player_id:
+        if len(command) == 8 and command[7] != "" and int(command[1]) == self.player_id:
             self.loc_x = int(command[2])
             self.loc_y = int(command[3])
             self.player_char = command[4]
-            self.num_points = int(command[6])
-            if command[5] == "0":
+            self.player_color = int(command[5])
+            self.num_points = int(command[7])
+            if command[6] == "0":
                 self.has_ball = False
-            elif command[5] == "1":
+            elif command[6] == "1":
                 self.has_ball = True
+        else:
+            print("Error parsing network string")
 
     def to_network(self):
-        network_string = "p:{}:{}:{}:{}:{}:{}\n".format(self.player_id,
+        network_string = "p:{}:{}:{}:{}:{}:{}:{}\n".format(self.player_id,
                                                         self.loc_x,
                                                         self.loc_y,
                                                         self.player_char,
+                                                        self.player_color,
                                                         self.has_ball_char(),
                                                         int(self.num_points))
         return network_string

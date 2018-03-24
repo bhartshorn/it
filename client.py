@@ -78,13 +78,18 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
-def color_menu(screen, name, clock, send_q):
+def color_menu(screen, name, color_index, clock, send_q):
     menu_width = 400
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
     save_button = buttons.GuiButton('save', fonts['sm'], colors, (470, 445))
     color_buttons = []
+    font_height = fonts['sm'].get_height()
+
+    text_box = pygame.Surface((200, font_height + 20))
+    text_box.fill(colors['white'])
+    pygame.draw.rect(text_box, colors['bg_menu'], [3, 3, 194, font_height + 14])
 
     for i in range(1, 9):
         index = str(i)
@@ -97,6 +102,8 @@ def color_menu(screen, name, clock, send_q):
         y_pos = ((n / 4) * 90) + 260
         color_buttons.append(buttons.ColorButton(colors[index], (x_pos, y_pos)))
 
+    color_buttons[color_index - 1].clicked = True
+
     close = False
     while not close:
         menu_surface.fill(colors['scores_border'])
@@ -106,18 +113,18 @@ def color_menu(screen, name, clock, send_q):
             if event.type == pygame.QUIT:
                 close = True
             elif event.type == pygame.KEYDOWN:
-                if (48 <= event.key <= 57 or 97 <= event.key <= 122) and len(name) < 10:
+                if (48 <= event.key <= 57 or 97 <= event.key <= 122) and len(name) < 7:
                     name = name + pygame.key.name(event.key)
                 elif event.key == pygame.K_BACKSPACE and len(name) >= 0:
                     name = name[:-1]
 
-                print(name)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if save_button.test_mouse(event.pos):
-                    send_q.append("c:{}:{}\n".format(my_id, name))
+                    send_q.append("c:{}:{}:{}\n".format(my_id, name, color_index))
                     close = True
-                for button in color_buttons:
+                for index, button in enumerate(color_buttons, start=1):
                     if button.click(event.pos):
+                        color_index = index
                         for unclick in color_buttons:
                             if button is not unclick:
                                 unclick.unclick()
@@ -137,7 +144,8 @@ def color_menu(screen, name, clock, send_q):
         name_label = fonts['ui'].render('name:', True, colors['scores_border'])
         name_text = fonts['ui'].render(name, True, colors['white'])
         screen.blit(name_label, (230, 185))
-        screen.blit(name_text, (230 + name_label.get_width() + 10, 185))
+        screen.blit(text_box, (230 + name_label.get_width() + 8, 183))
+        screen.blit(name_text, (230 + name_label.get_width() + 12, 185))
 
         pygame.display.update()
         clock.tick(10)
@@ -194,7 +202,7 @@ def game_loop(screen, send_q, recv_q):
                 if quit_button.test_mouse(event.pos):
                     quit = True
                 elif color_button.test_mouse(event.pos):
-                    color_menu(screen, players[my_id].player_char, clock, send_q)
+                    color_menu(screen, players[my_id].player_char, players[my_id].player_color, clock, send_q)
                     color_button.test_mouse((0, 0))
             elif event.type == pygame.MOUSEMOTION:
                 color_button.test_mouse(event.pos)
@@ -218,11 +226,10 @@ def game_loop(screen, send_q, recv_q):
                 my_id = int(command[1])
             elif command[0] == "p" and len(command) >= 2:
                 p_id = int(command[1])
-                if int(p_id) in players:
-                    players[p_id].parse_network(command)
-                else:
-                    new_player = Player(p_id)
-                    players[p_id] = new_player
+                if int(p_id) not in players:
+                    players[p_id] = Player(p_id)
+
+                players[p_id].parse_network(command)
 
         score_y = font_offset
 
@@ -231,21 +238,21 @@ def game_loop(screen, send_q, recv_q):
             if (p.has_ball):
                 draw_x = (p.loc_x * circle_radius)
                 draw_y = (p.loc_y * circle_radius)
-                pygame.draw.rect(screen, colors[str(i)], [draw_x, draw_y, circle_radius * 2, circle_radius * 2])
+                pygame.draw.rect(screen, colors[str(p.player_color)], [draw_x, draw_y, circle_radius * 2, circle_radius * 2])
                 pygame.draw.rect(screen, bg_play, [draw_x + (circle_radius / 2), draw_y + (circle_radius / 2), circle_radius, circle_radius])
             else:
                 draw_x = (p.loc_x * circle_radius) + circle_radius
                 draw_y = (p.loc_y * circle_radius) + circle_radius
 
                 # Yeah... this is harder than it needs to be!
-                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
-                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
+                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius, colors[str(p.player_color)])
+                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius, colors[str(p.player_color)])
                 gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
                 gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
 
 
             # Draw player's score
-            scores_surface.blit(fonts['ui'].render(p.player_char, True, colors[str(i)]), (score_x, score_y))
+            scores_surface.blit(fonts['ui'].render(p.player_char, True, colors[str(p.player_color)]), (score_x, score_y))
             score = fonts['ui'].render(str(p.num_points), True, colors['white'])
             scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
 
