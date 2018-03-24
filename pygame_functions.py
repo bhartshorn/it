@@ -119,7 +119,7 @@ class newTextBox(pygame.sprite.Sprite):
         newSurface = self.font.render(self.text, True, self.fontColour)
         self.image.blit(newSurface, [10, 5])
 
-         # Things cursor:
+        # Things cursor:
         self.cursor_surface = pygame.Surface((int(self.fontSize/20+1), self.fontSize))
         self.cursor_surface.fill((0,0,1))
         self.cursor_position = 0 # Inside text
@@ -134,10 +134,13 @@ class newTextBox(pygame.sprite.Sprite):
         while True:
             updateDisplay()
             for event in pygame.event.get():
+                self.cursor_visible = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
+                        self.cursor_visible = False
                         return self.text, event.key
                     elif event.key == pygame.K_TAB:
+                        self.cursor_visible = False
                         return self.text, event.key
                     elif event.key == pygame.K_ESCAPE:
                         pygame.quit()
@@ -152,7 +155,13 @@ class newTextBox(pygame.sprite.Sprite):
             pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
             newSurface = self.font.render(self.text, True, self.fontColour)
             self.image.blit(newSurface, [10, 5])
-            self.image.blit(self.cursor_surface, [10, 5])
+
+            if self.cursor_visible:
+                cursor_y_pos = self.font.size(self.text[:self.cursor_position])[0]
+                # Without this, the cursor is invisible when self.cursor_position > 0:
+                if self.cursor_position > 0:
+                    cursor_y_pos -= self.cursor_surface.get_width()
+                    self.image.blit(self.cursor_surface, (cursor_y_pos, 10))
 
             updateDisplay()
 
@@ -178,9 +187,11 @@ class newTextBox(pygame.sprite.Sprite):
                 # force lowercase letters
                 key -= 32
                 self.text += chr(key)
+                self.cursor_position += len(chr(key))
             else:
                 # use the unicode char
                 self.text += unicode
+                self.cursor_position += len(unicode)
         elif key == 8:
             # backspace. repeat until clear
             keys = pygame.key.get_pressed()
@@ -189,6 +200,7 @@ class newTextBox(pygame.sprite.Sprite):
             while deleting:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_BACKSPACE]:
+                    self.cursor_position = max(self.cursor_position - 1, 0)
                     thistime = pygame.time.get_ticks()
                     if thistime > nexttime:
                         self.text = self.text[0:len(self.text) - 1]
