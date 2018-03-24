@@ -139,9 +139,11 @@ class newTextBox(pygame.sprite.Sprite):
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.cursor_visible = False
+                        self.clear()
                         return self.text, event.key
                     elif event.key == pygame.K_TAB:
                         self.cursor_visible = False
+                        self.clear()
                         return self.text, event.key
                     elif event.key == pygame.K_ESCAPE:
                         pygame.quit()
@@ -160,9 +162,8 @@ class newTextBox(pygame.sprite.Sprite):
             tick(30)
 
     def cursorUpdate(self):
-        
+
         # Update self.cursor_visible
-        print "CLOCK", gameClock.get_time()
         self.cursor_ms_counter += gameClock.get_time()
         if self.cursor_ms_counter >= self.cursor_switch_ms:
             self.cursor_ms_counter %= self.cursor_switch_ms
@@ -202,6 +203,7 @@ class newTextBox(pygame.sprite.Sprite):
                 self.text += unicode
                 self.cursor_position += len(unicode)
         elif key == 8:
+            self.cursor_position = max(self.cursor_position - 1, 0)
             # backspace. repeat until clear
             keys = pygame.key.get_pressed()
             nexttime = pygame.time.get_ticks() + 200
@@ -209,7 +211,6 @@ class newTextBox(pygame.sprite.Sprite):
             while deleting:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_BACKSPACE]:
-                    self.cursor_position = max(self.cursor_position - 1, 0)
                     thistime = pygame.time.get_ticks()
                     if thistime > nexttime:
                         self.text = self.text[0:len(self.text) - 1]
@@ -217,6 +218,7 @@ class newTextBox(pygame.sprite.Sprite):
                         pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
                         newSurface = self.font.render(self.text, True, self.fontColour)
                         self.image.blit(newSurface, [10, 5])
+                        self.cursorUpdate()
                         updateDisplay()
                         nexttime = thistime + 50
                         pygame.event.clear()
