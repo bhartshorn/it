@@ -101,25 +101,94 @@ class newSprite(pygame.sprite.Sprite):
 class newTextBox(pygame.sprite.Sprite):
     def __init__(self, text, xpos, ypos, width, case, maxLength, fontSize):
         pygame.sprite.Sprite.__init__(self)
-        self.text = ""
+        self.text = text
         self.width = width
-        self.initialText = text
         self.case = case
         self.maxLength = maxLength
-        self.boxSize = int(fontSize * 1.7)
+        self.boxSize = int(fontSize)
+        self.fontSize = fontSize
         self.image = pygame.Surface((width, self.boxSize))
         self.image.fill((255, 255, 255))
         pygame.draw.rect(self.image, (0, 0, 0), [0, 0, width - 1, self.boxSize - 1], 2)
         self.rect = self.image.get_rect()
-        self.fontFace = pygame.font.match_font("Arial")
+        self.fontFace = pygame.font.match_font("LiberationsSansRegular")
         self.fontColour = pygame.Color("black")
         self.initialColour = (180, 180, 180)
         self.font = pygame.font.Font(self.fontFace, fontSize)
         self.rect.topleft = [xpos, ypos]
-        newSurface = self.font.render(self.initialText, True, self.initialColour)
+        newSurface = self.font.render(self.text, True, self.fontColour)
         self.image.blit(newSurface, [10, 5])
 
-    def update(self, keyevent):
+        # Things cursor:
+        self.cursor_surface = pygame.Surface((int(self.fontSize/20+1), self.fontSize - 5))
+        self.cursor_surface.fill((0,0,1))
+        self.cursor_position = self.font.size(self.text[:0])[0] + 15
+        self.cursor_visible = True # Switches every self.cursor_switch_ms ms
+        self.cursor_switch_ms = 500 # /|\
+        self.cursor_ms_counter = 0
+
+
+    def update(self):
+        global keydict
+        returnVal=None
+        self.cursor_visible = True
+        while True:
+            self.cursorUpdate()
+            updateDisplay()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        self.cursor_visible = False
+                        self.clear()
+                        return self.text, event.key
+                    elif event.key == pygame.K_TAB:
+                        self.cursor_visible = False
+                        self.clear()
+                        return self.text, event.key
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    else:
+                        self.keyPress(event)
+                elif event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            self.image.fill((255, 255, 255))
+            pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
+            newSurface = self.font.render(self.text, True, self.fontColour)
+            self.image.blit(newSurface, [10, 5])
+            updateDisplay()
+            tick(30)
+
+    def cursorUpdate(self):
+
+        # Update self.cursor_visible
+        self.cursor_ms_counter += gameClock.get_time()
+        if self.cursor_ms_counter >= self.cursor_switch_ms:
+            self.cursor_ms_counter %= self.cursor_switch_ms
+            self.cursor_visible = not self.cursor_visible
+        if self.cursor_visible:
+            cursor_y_pos = self.font.size(self.text[:self.cursor_position])[0] + 15 # this fixes the strange offset
+            # Without this, the cursor is invisible when self.cursor_position > 0:
+            if self.cursor_position > 0:
+                cursor_y_pos -= self.cursor_surface.get_width()
+                self.image.blit(self.cursor_surface, (cursor_y_pos, 5))
+
+    def move(self, xpos, ypos, centre=False):
+        if centre:
+            self.rect.topleft = [xpos, ypos]
+        else:
+            self.rect.center = [xpos, ypos]
+
+    def clear(self):
+        self.image.fill((255, 255, 255))
+        pygame.draw.rect(self.image, (169,169,169), [0, 0, self.width - 1, self.boxSize - 1], 2)
+        newSurface = self.font.render(self.text, True, self.initialColour)
+        self.image.blit(newSurface, [10, 5])
+        updateDisplay()
+
+    def keyPress(self, keyevent):
         key = keyevent.key
         unicode = keyevent.unicode
         if key > 31 and key < 127 and (
@@ -128,10 +197,13 @@ class newTextBox(pygame.sprite.Sprite):
                 # force lowercase letters
                 key -= 32
                 self.text += chr(key)
+                self.cursor_position += len(chr(key))
             else:
                 # use the unicode char
                 self.text += unicode
+                self.cursor_position += len(unicode)
         elif key == 8:
+            self.cursor_position = max(self.cursor_position - 1, 0)
             # backspace. repeat until clear
             keys = pygame.key.get_pressed()
             nexttime = pygame.time.get_ticks() + 200
@@ -146,31 +218,12 @@ class newTextBox(pygame.sprite.Sprite):
                         pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
                         newSurface = self.font.render(self.text, True, self.fontColour)
                         self.image.blit(newSurface, [10, 5])
+                        self.cursorUpdate()
                         updateDisplay()
                         nexttime = thistime + 50
                         pygame.event.clear()
                 else:
                     deleting = False
-
-        self.image.fill((255, 255, 255))
-        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
-        newSurface = self.font.render(self.text, True, self.fontColour)
-        self.image.blit(newSurface, [10, 5])
-        updateDisplay()
-
-    def move(self, xpos, ypos, centre=False):
-        if centre:
-            self.rect.topleft = [xpos, ypos]
-        else:
-            self.rect.center = [xpos, ypos]
-
-    def clear(self):
-        self.image.fill((255, 255, 255))
-        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
-        newSurface = self.font.render(self.initialText, True, self.initialColour)
-        self.image.blit(newSurface, [10, 5])
-        updateDisplay()
-
 
 class newLabel(pygame.sprite.Sprite):
     def __init__(self, text, fontSize, font, fontColour, xpos, ypos, background):
@@ -249,6 +302,7 @@ def screenSize(sizex, sizey, xpos=None, ypos=None, fullscreen=False):
     pygame.display.set_caption("Graphics Window")
     bgSurface = screen.copy()
     pygame.display.update()
+    return screen
 
 
 def moveSprite(sprite, x, y, centre=False):
@@ -541,7 +595,6 @@ def makeTextBox(xpos, ypos, width, case=0, startingText="Please type here", maxL
 def textBoxInput(textbox, functionToCall=None, args=[]):
     # starts grabbing key inputs, putting into textbox until enter pressed
     global keydict
-    textbox.text = ""
     returnVal=None
     while True:
         updateDisplay()
@@ -550,11 +603,12 @@ def textBoxInput(textbox, functionToCall=None, args=[]):
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    textbox.clear()
                     if returnVal:
                         return textbox.text, returnVal
                     else:
-                        return textbox.text
+                        return textbox.text, event.key
+                elif event.key == pygame.K_TAB:
+                    return textbox.text, event.key
                 elif event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()

@@ -83,6 +83,7 @@ def color_menu(screen, name, color_index, clock, send_q):
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
     menu_surface.fill(colors['scores_border'])
+
     save_button = buttons.GuiButton('save', fonts['sm'], colors, (470, 445))
     color_buttons = []
     font_height = fonts['sm'].get_height()
@@ -143,6 +144,7 @@ def color_menu(screen, name, color_index, clock, send_q):
         # Render text box
         name_label = fonts['ui'].render('name:', True, colors['scores_border'])
         name_text = fonts['ui'].render(name, True, colors['white'])
+
         screen.blit(name_label, (230, 185))
         screen.blit(text_box, (230 + name_label.get_width() + 8, 183))
         screen.blit(name_text, (230 + name_label.get_width() + 12, 185))
@@ -271,43 +273,35 @@ def game_loop(screen, send_q, recv_q):
         clock.tick(15)
 
 def port_prompt():
-    screenSize(400,185)
-    setBackgroundColour("gray")
+    screen_width = 450
+    screen_height = 185
+    screen = screenSize(screen_width, screen_height)
+    setBackgroundColour(colors["bg_menu"])
     
-    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular", "gray")
+    pygame.draw.rect(screen, (211,211,211), [0, 0, screen_width - 1, screen_height - 1], 2)
+    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular")
     showLabel(intro_label)
     
 
-    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular", "gray")
+    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular")
     showLabel(ip_label)
 
 
-    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular", "gray")
+    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular")
     showLabel(port_label)
 
 
-    ip_box = makeTextBox(195, 70, 180,0, "", 0,24)
-    port_box = makeTextBox(195, 125, 180,0, "11000", 0,24)
+    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "localhost", 15,40)
+    port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
     
     showTextBox(ip_box)
     showTextBox(port_box)
 
-    ip_entry = textBoxInput(ip_box)
-
-    if ip_entry == "localhost":
-        ip_entry = str(ip_entry)
-    else:
-        ip_entry = int(ip_entry)
-    
-    finished_ip = makeLabel(ip_entry, 34, 205, 78, "black", "LiberationsSansRegular", "clear")
-    showLabel(finished_ip)
-
-    port_entry = textBoxInput(port_box)
-    finished_port = makeLabel(port_entry, 35, 205, 132, "black", "LiberationsSansRegular", "clear")
-    showLabel(finished_port)
-
-    end()
-    return ip_entry, int(port_entry)
+    while True:
+        ip_entry, key = ip_box.update()
+        port_entry, key = port_box.update()
+        if key == pygame.K_RETURN:
+            return str(ip_entry), int(port_entry)
 
 def main():
     global fonts
@@ -321,8 +315,8 @@ def main():
 
     if args.ip:
         ip = args.ip
-    #else:
-        #ip, port = port_prompt()
+    else:
+        ip, port = port_prompt()
 
     # set up pygame
     pygame.init()
