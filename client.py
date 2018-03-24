@@ -279,8 +279,8 @@ def port_prompt():
     showLabel(port_label)
 
 
-    ip_box = makeTextBox(195, 70, 180,0, "", 0,24)
-    port_box = makeTextBox(195, 125, 180,0, "11000", 0,24)
+    ip_box = makeTextBox(195, 70, 180,0, "", 0,40)
+    port_box = makeTextBox(195, 125, 180,0, "11000", 0,40)
     
     showTextBox(ip_box)
     showTextBox(port_box)

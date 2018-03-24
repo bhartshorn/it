@@ -101,22 +101,22 @@ class newSprite(pygame.sprite.Sprite):
 class newTextBox(pygame.sprite.Sprite):
     def __init__(self, text, xpos, ypos, width, case, maxLength, fontSize):
         pygame.sprite.Sprite.__init__(self)
-        self.text = ""
+        self.text = text
         self.width = width
-        self.initialText = text
         self.case = case
         self.maxLength = maxLength
         self.boxSize = int(fontSize * 1.7)
+        self.fontSize = fontSize
         self.image = pygame.Surface((width, self.boxSize))
         self.image.fill((255, 255, 255))
         pygame.draw.rect(self.image, (0, 0, 0), [0, 0, width - 1, self.boxSize - 1], 2)
         self.rect = self.image.get_rect()
-        self.fontFace = pygame.font.match_font("Arial")
+        self.fontFace = pygame.font.match_font("LiberationsSansRegular")
         self.fontColour = pygame.Color("black")
         self.initialColour = (180, 180, 180)
         self.font = pygame.font.Font(self.fontFace, fontSize)
         self.rect.topleft = [xpos, ypos]
-        newSurface = self.font.render(self.initialText, True, self.initialColour)
+        newSurface = self.font.render(self.text, True, self.fontColour)
         self.image.blit(newSurface, [10, 5])
 
     def update(self, keyevent):
@@ -541,7 +541,6 @@ def makeTextBox(xpos, ypos, width, case=0, startingText="Please type here", maxL
 def textBoxInput(textbox, functionToCall=None, args=[]):
     # starts grabbing key inputs, putting into textbox until enter pressed
     global keydict
-    textbox.text = ""
     returnVal=None
     while True:
         updateDisplay()
