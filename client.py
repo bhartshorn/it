@@ -289,7 +289,7 @@ def port_prompt():
         ip_entry, key = textBoxInput(ip_box)
         port_entry, key = textBoxInput(port_box)
         if key == pygame.K_RETURN:
-            return ip_entry, int(port_entry)
+            return str(ip_entry), int(port_entry)
 
 def main():
     global fonts
