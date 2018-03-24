@@ -183,7 +183,7 @@ class newTextBox(pygame.sprite.Sprite):
 
     def clear(self):
         self.image.fill((255, 255, 255))
-        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
+        pygame.draw.rect(self.image, (169,169,169), [0, 0, self.width - 1, self.boxSize - 1], 2)
         newSurface = self.font.render(self.text, True, self.initialColour)
         self.image.blit(newSurface, [10, 5])
         updateDisplay()

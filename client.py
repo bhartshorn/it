@@ -267,22 +267,22 @@ def port_prompt():
     screen_width = 450
     screen_height = 185
     screen = screenSize(screen_width, screen_height)
-    setBackgroundColour("gray")
+    setBackgroundColour(colors["bg_menu"])
     
     pygame.draw.rect(screen, (211,211,211), [0, 0, screen_width - 1, screen_height - 1], 2)
-    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular", "gray")
+    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular")
     showLabel(intro_label)
     
 
-    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular", "gray")
+    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular")
     showLabel(ip_label)
 
 
-    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular", "gray")
+    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular")
     showLabel(port_label)
 
 
-    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "", 15,40)
+    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "localhost", 15,40)
     port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
     
     showTextBox(ip_box)
