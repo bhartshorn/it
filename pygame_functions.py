@@ -128,7 +128,48 @@ class newTextBox(pygame.sprite.Sprite):
         self.cursor_ms_counter = 0
 
 
-    def update(self, keyevent):
+    def update(self):
+        global keydict
+        returnVal=None
+        while True:
+            updateDisplay()
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        return self.text, event.key
+                    elif event.key == pygame.K_TAB:
+                        return self.text, event.key
+                    elif event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    else:
+                        self.keyPress(event)
+                elif event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+            self.image.fill((255, 255, 255))
+            pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
+            newSurface = self.font.render(self.text, True, self.fontColour)
+            self.image.blit(newSurface, [10, 5])
+            self.image.blit(self.cursor_surface, [10, 5])
+
+            updateDisplay()
+
+    def move(self, xpos, ypos, centre=False):
+        if centre:
+            self.rect.topleft = [xpos, ypos]
+        else:
+            self.rect.center = [xpos, ypos]
+
+    def clear(self):
+        self.image.fill((255, 255, 255))
+        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
+        newSurface = self.font.render(self.text, True, self.initialColour)
+        self.image.blit(newSurface, [10, 5])
+        updateDisplay()
+
+    def keyPress(self, keyevent):
         key = keyevent.key
         unicode = keyevent.unicode
         if key > 31 and key < 127 and (
@@ -160,26 +201,6 @@ class newTextBox(pygame.sprite.Sprite):
                         pygame.event.clear()
                 else:
                     deleting = False
-
-        self.image.fill((255, 255, 255))
-        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
-        newSurface = self.font.render(self.text, True, self.fontColour)
-        self.image.blit(newSurface, [10, 5])
-        updateDisplay()
-
-    def move(self, xpos, ypos, centre=False):
-        if centre:
-            self.rect.topleft = [xpos, ypos]
-        else:
-            self.rect.center = [xpos, ypos]
-
-    def clear(self):
-        self.image.fill((255, 255, 255))
-        pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
-        newSurface = self.font.render(self.text, True, self.initialColour)
-        self.image.blit(newSurface, [10, 5])
-        updateDisplay()
-
 
 class newLabel(pygame.sprite.Sprite):
     def __init__(self, text, fontSize, font, fontColour, xpos, ypos, background):

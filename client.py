@@ -286,8 +286,8 @@ def port_prompt():
     showTextBox(port_box)
 
     while True:
-        ip_entry, key = textBoxInput(ip_box)
-        port_entry, key = textBoxInput(port_box)
+        ip_entry, key = ip_box.update()
+        port_entry, key = port_box.update()
         if key == pygame.K_RETURN:
             return str(ip_entry), int(port_entry)
 
