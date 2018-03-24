@@ -554,7 +554,10 @@ def textBoxInput(textbox, functionToCall=None, args=[]):
                     if returnVal:
                         return textbox.text, returnVal
                     else:
-                        return textbox.text
+                        return textbox.text, event.key
+
+                elif event.key == pygame.K_TAB:
+                    return textbox.text, event.key
                 elif event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
