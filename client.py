@@ -264,9 +264,12 @@ def game_loop(screen, send_q, recv_q):
         clock.tick(15)
 
 def port_prompt():
-    screenSize(400,185)
+    screen_width = 400
+    screen_height = 185
+    screen = screenSize(screen_width, screen_height)
     setBackgroundColour("gray")
     
+    pygame.draw.rect(screen, (211,211,211), [0, 0, screen_width - 1, screen_height - 1], 2)
     intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular", "gray")
     showLabel(intro_label)
     
