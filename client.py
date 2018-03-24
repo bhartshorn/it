@@ -285,22 +285,11 @@ def port_prompt():
     showTextBox(ip_box)
     showTextBox(port_box)
 
-    ip_entry = textBoxInput(ip_box)
-
-    if ip_entry == "localhost":
-        ip_entry = str(ip_entry)
-    else:
-        ip_entry = int(ip_entry)
-    
-    finished_ip = makeLabel(ip_entry, 34, 205, 78, "black", "LiberationsSansRegular", "clear")
-    showLabel(finished_ip)
-
-    port_entry = textBoxInput(port_box)
-    finished_port = makeLabel(port_entry, 35, 205, 132, "black", "LiberationsSansRegular", "clear")
-    showLabel(finished_port)
-
-    end()
-    return ip_entry, int(port_entry)
+    while True:
+        ip_entry, key = textBoxInput(ip_box)
+        port_entry, key = textBoxInput(port_box)
+        if key == pygame.K_RETURN:
+            return ip_entry, int(port_entry)
 
 def main():
     global fonts
