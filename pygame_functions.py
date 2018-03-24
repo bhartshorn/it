@@ -120,9 +120,9 @@ class newTextBox(pygame.sprite.Sprite):
         self.image.blit(newSurface, [10, 5])
 
         # Things cursor:
-        self.cursor_surface = pygame.Surface((int(self.fontSize/20+1), self.fontSize))
+        self.cursor_surface = pygame.Surface((int(self.fontSize/20+1), self.fontSize - 5))
         self.cursor_surface.fill((0,0,1))
-        self.cursor_position = 0 # Inside text
+        self.cursor_position = self.font.size(self.text[:0])[0] + 15
         self.cursor_visible = True # Switches every self.cursor_switch_ms ms
         self.cursor_switch_ms = 500 # /|\
         self.cursor_ms_counter = 0
@@ -131,10 +131,11 @@ class newTextBox(pygame.sprite.Sprite):
     def update(self):
         global keydict
         returnVal=None
+        self.cursor_visible = True
         while True:
+            self.cursorUpdate()
             updateDisplay()
             for event in pygame.event.get():
-                self.cursor_visible = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN:
                         self.cursor_visible = False
@@ -155,15 +156,23 @@ class newTextBox(pygame.sprite.Sprite):
             pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
             newSurface = self.font.render(self.text, True, self.fontColour)
             self.image.blit(newSurface, [10, 5])
-
-            if self.cursor_visible:
-                cursor_y_pos = self.font.size(self.text[:self.cursor_position])[0]
-                # Without this, the cursor is invisible when self.cursor_position > 0:
-                if self.cursor_position > 0:
-                    cursor_y_pos -= self.cursor_surface.get_width()
-                    self.image.blit(self.cursor_surface, (cursor_y_pos, 10))
-
             updateDisplay()
+            tick(30)
+
+    def cursorUpdate(self):
+        
+        # Update self.cursor_visible
+        print "CLOCK", gameClock.get_time()
+        self.cursor_ms_counter += gameClock.get_time()
+        if self.cursor_ms_counter >= self.cursor_switch_ms:
+            self.cursor_ms_counter %= self.cursor_switch_ms
+            self.cursor_visible = not self.cursor_visible
+        if self.cursor_visible:
+            cursor_y_pos = self.font.size(self.text[:self.cursor_position])[0] + 15 # this fixes the strange offset
+            # Without this, the cursor is invisible when self.cursor_position > 0:
+            if self.cursor_position > 0:
+                cursor_y_pos -= self.cursor_surface.get_width()
+                self.image.blit(self.cursor_surface, (cursor_y_pos, 5))
 
     def move(self, xpos, ypos, centre=False):
         if centre:

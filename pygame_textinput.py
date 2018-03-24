@@ -111,7 +111,6 @@ class TextInput:
         # Update key counters:
         for key in self.keyrepeat_counters :
             self.keyrepeat_counters[key][0] += self.clock.get_time() # Update clock
-            print("CLOCK:", self.clock.get_time())
             # Generate new key events if enough time has passed:
             if self.keyrepeat_counters[key][0] >= self.keyrepeat_intial_interval_ms:
                 self.keyrepeat_counters[key][0] = self.keyrepeat_intial_interval_ms - \
