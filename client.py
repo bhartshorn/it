@@ -1,18 +1,38 @@
-import curses
 import socket
 import string
 import select
 import time
 import threading
 import argparse
+import pygame
+import buttons
+from pygame import gfxdraw
 from player import Player
 from collections import deque
+from pygame_functions import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--port", type=int, help="port number to connect to")
 parser.add_argument("-i", "--ip", help="ip address to connect to")
 args = parser.parse_args()
 quit = False
+my_id = 1
+
+# Colors
+colors = {'1':              pygame.Color("#5BB668"),
+          '2':              pygame.Color("#B6815B"),
+          '3':              pygame.Color("#B6635B"),
+          '4':              pygame.Color("#B6B35B"),
+          '5':              pygame.Color("#92B65B"),
+          '6':              pygame.Color("#5BABB6"),
+          '7':              pygame.Color("#B65BA9"),
+          '8':              pygame.Color("#715BB6"),
+          'bg_menu':        pygame.Color("#575757"),
+          'scores_border':  pygame.Color("#9B9B9B"),
+          'white':          pygame.Color("#FFFFFF")}
+
+# To be populated in main()
+fonts = {}
 
 class NetworkThread(threading.Thread):
     recv_buf = ""
@@ -35,13 +55,17 @@ class NetworkThread(threading.Thread):
                 self.send()
 
     def send(self):
-        # TODO: try-catch
         while len(self.send_q) > 0:
-            self.sock.send(self.send_q.popleft())
+            try:
+                self.sock.send(self.send_q.popleft())
+            except socket.error as msg:
+                print("Could not send, ", msg)
 
     def recieve(self):
-        # TODO: try-catch
-        buffer = self.recv_buf + self.sock.recv(2048)
+        try:
+            buffer = self.recv_buf + self.sock.recv(2048)
+        except socket.error as msg:
+            print("Could not receive, ", msg)
         if len(buffer) == 0:
             return
 
@@ -54,70 +78,137 @@ class NetworkThread(threading.Thread):
         for field in split:
             self.recv_q.append(field)
 
+def color_menu(screen, name, clock, send_q):
+    menu_width = 400
+    menu_height = 350
+    menu_surface = pygame.Surface((menu_width, menu_height))
+    menu_surface.fill(colors['scores_border'])
+    save_button = buttons.GuiButton('save', fonts['sm'], colors, (470, 445))
+    color_buttons = []
 
-def game_loop(stdscr, send_q, recv_q):
+    for i in range(1, 9):
+        index = str(i)
+        n = i - 1
+
+        col = n % 4
+        row = n / 4
+
+        x_pos = (col * 70 + col * 20) + 230
+        y_pos = ((n / 4) * 90) + 260
+        color_buttons.append(buttons.ColorButton(colors[index], (x_pos, y_pos)))
+
+    close = False
+    while not close:
+        menu_surface.fill(colors['scores_border'])
+        pygame.draw.rect(menu_surface, colors['bg_menu'], [3, 3, menu_width - 6, menu_height - 6])
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                close = True
+            elif event.type == pygame.KEYDOWN:
+                if (48 <= event.key <= 57 or 97 <= event.key <= 122) and len(name) < 10:
+                    name = name + pygame.key.name(event.key)
+                elif event.key == pygame.K_BACKSPACE and len(name) >= 0:
+                    name = name[:-1]
+
+                print(name)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if save_button.test_mouse(event.pos):
+                    send_q.append("c:{}:{}\n".format(my_id, name))
+                    close = True
+                for button in color_buttons:
+                    if button.click(event.pos):
+                        for unclick in color_buttons:
+                            if button is not unclick:
+                                unclick.unclick()
+            elif event.type == pygame.MOUSEMOTION:
+                save_button.test_mouse(event.pos)
+                for button in color_buttons:
+                    button.test_mouse(event.pos)
+
+
+        screen.blit(menu_surface, (200, 150))
+        save_button.draw(screen)
+
+        for button in color_buttons:
+            button.draw(screen)
+
+        # Render text box
+        name_label = fonts['ui'].render('name:', True, colors['scores_border'])
+        name_text = fonts['ui'].render(name, True, colors['white'])
+        screen.blit(name_label, (230, 185))
+        screen.blit(name_text, (230 + name_label.get_width() + 10, 185))
+
+        pygame.display.update()
+        clock.tick(10)
+
+def game_loop(screen, send_q, recv_q):
     global quit
+    #global lib_sans_small 
+    #global lib_sans
+    clock = pygame.time.Clock()
+
+    # Set up play area surface
+    bg_play = pygame.Color("black")
+    screen.fill(bg_play)
+
+    # Set up scores surface
+    scores_surface = pygame.Surface((200, 600))
+    bg_scores = pygame.Color("#575757")
+    scores_surface.fill(bg_scores)
+    score_x = 12
+
+    # Set up font for scores
+    #lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+    font_height = fonts['ui'].get_height()
+    font_offset = font_height + 5
+
+    # Set up scores header
+    fonts['ui'].set_underline(True)
+    scores_header = fonts['ui'].render("scores", True, colors['scores_border'])
+    fonts['ui'].set_underline(False)
+    offset_scores_header = (200 - scores_header.get_width()) / 2
+
+    #lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
+    color_button = buttons.GuiButton('name/color', fonts['sm'], colors, (650, 500))
+    quit_button = buttons.GuiButton('quit', fonts['sm'], colors, (650, 550))
+
+    # Set up circle parameters
+    circle_radius = 10
+    circle_radius_inner = 5
+
+    # Game state
     players = {}
-    k = 0
-    last_command = ""
-    my_id = 1
+    global my_id
 
-    # Clear and refresh the screen for a blank canvas
-    stdscr.erase()
-    stdscr.refresh()
-    stdscr.nodelay(True)
-    height, width = stdscr.getmaxyx()
-
-    game_window = stdscr.subwin(28, 80, 0, 0)
-    scores_window = stdscr.subwin(28, width - 80, 0, 80)
-
-    # Start colors in curses
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK) 
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_WHITE)
-    curses.init_pair(4, curses.COLOR_RED, curses.COLOR_WHITE)
-
-    curses.curs_set(0)
-    #curses.resizeterm(28, 80)
-
-    # Loop where k is the last character pressed
     while not quit:
-        # get next input
-        k = stdscr.getch()
-        move = ""
+        screen.fill(bg_play)
+        scores_surface.fill(bg_scores)
+        command = ""
 
-        # Initialization
-        game_window.erase()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
+                send_q.append("q:{}\n".format(my_id))
+                quit = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if quit_button.test_mouse(event.pos):
+                    quit = True
+                elif color_button.test_mouse(event.pos):
+                    color_menu(screen, players[my_id].player_char, clock, send_q)
+                    color_button.test_mouse((0, 0))
+            elif event.type == pygame.MOUSEMOTION:
+                color_button.test_mouse(event.pos)
+                quit_button.test_mouse(event.pos)
 
-        if k == curses.KEY_DOWN or k == ord('j'):
-            move = "d"
-        elif k == curses.KEY_UP or k == ord('k'):
-            move = "u"
-        elif k == curses.KEY_RIGHT or k == ord('l'):
-            move = "r"
-        elif k == curses.KEY_LEFT or k == ord('h'):
-            move = "l"
-        elif k == ord('p'):
-            prompt_message = "Please enter the 'Character' you would like to be"
-            prompt = stdscr.subwin(3,len(prompt_message) + 4, 13, 10)
-            prompt.attron(curses.color_pair(1))
-            prompt.border()
-            prompt.attroff(curses.color_pair(1))
-            prompt.addstr(1,2, prompt_message)
-            prompt.refresh()
-            c = -1
-            while (c > 126 or c < 33):
-                c = prompt.getch()
-            send_q.append("c:{}:{}\n".format(my_id, chr(c)))
-
-        elif k == ord('q'):
-            send_q.append("q:{}\n".format(my_id))
-            quit = True
-
-        if move != "":
-            send_q.append("m:{}:{}\n".format(my_id, move))
-
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
+            send_q.append("m:{}:l\n".format(my_id))
+        if pressed[pygame.K_RIGHT] or pressed[pygame.K_l]: 
+            send_q.append("m:{}:r\n".format(my_id))
+        if pressed[pygame.K_UP] or pressed[pygame.K_k]:
+            send_q.append("m:{}:u\n".format(my_id))
+        if pressed[pygame.K_DOWN] or pressed[pygame.K_j]:
+            send_q.append("m:{}:d\n".format(my_id))
 
         while len(recv_q) > 0:
             command = string.split(recv_q.popleft(), ":")
@@ -133,52 +224,97 @@ def game_loop(stdscr, send_q, recv_q):
                     new_player = Player(p_id)
                     players[p_id] = new_player
 
-            last_command = command
+        score_y = font_offset
 
-        #create statusbar string
-        statusbarstr = "Press 'q' to exit | ID: {} | Command: {}".format(my_id, last_command)
-        # Render status bar
-        game_window.attron(curses.color_pair(3))
-        game_window.addstr(26, 1, statusbarstr)
-        game_window.addstr(26, len(statusbarstr) + 1, " " * (79 - len(statusbarstr)))
-        game_window.attroff(curses.color_pair(3)) 
-        game_window.border()
-        game_window.addstr(0, 2, "GAME")
-
-        scores_window.border()
-        scores_window.addstr(0, 2, "SCORES")
-        scores_next_y = 1
-        #render Players
         for i, p in players.viewitems():
-            if (i == my_id):
-                player_color = curses.color_pair(2)
-            else:
-                player_color = curses.color_pair(0)
-
+            # Draw player on screen
             if (p.has_ball):
-                player_color = player_color | curses.A_REVERSE
+                draw_x = (p.loc_x * circle_radius)
+                draw_y = (p.loc_y * circle_radius)
+                pygame.draw.rect(screen, colors[str(i)], [draw_x, draw_y, circle_radius * 2, circle_radius * 2])
+                pygame.draw.rect(screen, bg_play, [draw_x + (circle_radius / 2), draw_y + (circle_radius / 2), circle_radius, circle_radius])
+            else:
+                draw_x = (p.loc_x * circle_radius) + circle_radius
+                draw_y = (p.loc_y * circle_radius) + circle_radius
 
-            game_window.addstr(p.loc_y+1, p.loc_x+1, p.player_char, player_color)
-            scores_window.addstr(scores_next_y, 2, "{}: {}".format(i, p.num_points))
-            scores_next_y += 1
+                # Yeah... this is harder than it needs to be!
+                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
+                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius, colors[str(i)])
+                gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
+                gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
 
+
+            # Draw player's score
+            scores_surface.blit(fonts['ui'].render(p.player_char, True, colors[str(i)]), (score_x, score_y))
+            score = fonts['ui'].render(str(p.num_points), True, colors['white'])
+            scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
+
+
+            #update score y loc
+            score_y = score_y + font_offset
+
+        pygame.draw.line(scores_surface, colors['scores_border'], [0, 0], [0, 600], 5)
+        scores_surface.blit(scores_header, (offset_scores_header, 5))
+        screen.blit(scores_surface, (600, 0))
+        color_button.draw(screen)
+        quit_button.draw(screen)
+        #screen.blit(color_button, (650, 500))
         # Refresh the screen
-        game_window.refresh()
-        scores_window.refresh()
-        time.sleep(0.005)
+        pygame.display.update()
+        clock.tick(15)
 
-    # When game loop is finished
-    exit()
+def port_prompt():
+    screenSize(400,185)
+    setBackgroundColour("gray")
+    
+    intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular", "gray")
+    showLabel(intro_label)
+    
+
+    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular", "gray")
+    showLabel(ip_label)
+
+
+    port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular", "gray")
+    showLabel(port_label)
+
+
+    ip_box = makeTextBox(195, 70, 180,0, "", 0,24)
+    port_box = makeTextBox(195, 125, 180,0, "11000", 0,24)
+    
+    showTextBox(ip_box)
+    showTextBox(port_box)
+
+    while True:
+        ip_entry, key = textBoxInput(ip_box)
+        port_entry, key = textBoxInput(port_box)
+        if key == pygame.K_RETURN:
+            return ip_entry, int(port_entry)
 
 def main():
+    global fonts
+
     # set up socket parameters
     port = 11000
     ip = "localhost"
+
     if args.port:
         port = args.port
 
     if args.ip:
         ip = args.ip
+    #else:
+        #ip, port = port_prompt()
+
+    # set up pygame
+    pygame.init()
+
+    
+
+    fonts['ui'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 30)
+    fonts['sm'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 16)
+
+    game_window = pygame.display.set_mode((800, 600))
 
     # set up the socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -190,7 +326,8 @@ def main():
     network_thread = NetworkThread(sock, send_q, recv_q)
     network_thread.start()
 
-    curses.wrapper(game_loop, send_q, recv_q)
+    game_loop(game_window, send_q, recv_q)
+    #curses.wrapper(game_loop, send_q, recv_q)
 
     sock.close()
 

@@ -1,14 +1,14 @@
 import time
 
-AREA_WIDTH = 78
-AREA_HEIGHT = 25
+AREA_WIDTH = 59
+AREA_HEIGHT = 59
 
 class Player:
     player_id = -1
     has_ball = False
     lost_ball_time = 0
     num_points = 0
-    player_char = "O"
+    player_char = "0"
     loc_x = 0
     loc_y = 0
     last_updated = -1
@@ -17,6 +17,7 @@ class Player:
 
     def __init__ (self, id):
         self.player_id = id
+        self.player_char = str(id)
 
     def move(self, input):
         #if (len(command) != 3 or command[2] == "" or command[1] != self.player_id):
