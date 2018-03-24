@@ -105,7 +105,7 @@ class newTextBox(pygame.sprite.Sprite):
         self.width = width
         self.case = case
         self.maxLength = maxLength
-        self.boxSize = int(fontSize * 1.7)
+        self.boxSize = int(fontSize)
         self.fontSize = fontSize
         self.image = pygame.Surface((width, self.boxSize))
         self.image.fill((255, 255, 255))
