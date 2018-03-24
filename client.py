@@ -264,7 +264,7 @@ def game_loop(screen, send_q, recv_q):
         clock.tick(15)
 
 def port_prompt():
-    screen_width = 400
+    screen_width = 450
     screen_height = 185
     screen = screenSize(screen_width, screen_height)
     setBackgroundColour("gray")
@@ -282,8 +282,8 @@ def port_prompt():
     showLabel(port_label)
 
 
-    ip_box = makeTextBox(195, 70, 180,0, "", 0,40)
-    port_box = makeTextBox(195, 125, 180,0, "11000", 0,40)
+    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "", 15,40)
+    port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
     
     showTextBox(ip_box)
     showTextBox(port_box)
