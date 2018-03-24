@@ -119,6 +119,15 @@ class newTextBox(pygame.sprite.Sprite):
         newSurface = self.font.render(self.text, True, self.fontColour)
         self.image.blit(newSurface, [10, 5])
 
+         # Things cursor:
+        self.cursor_surface = pygame.Surface((int(self.fontSize/20+1), self.fontSize))
+        self.cursor_surface.fill((0,0,1))
+        self.cursor_position = 0 # Inside text
+        self.cursor_visible = True # Switches every self.cursor_switch_ms ms
+        self.cursor_switch_ms = 500 # /|\
+        self.cursor_ms_counter = 0
+
+
     def update(self, keyevent):
         key = keyevent.key
         unicode = keyevent.unicode
