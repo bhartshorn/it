@@ -290,10 +290,9 @@ def port_prompt():
     port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular")
     showLabel(port_label)
 
-
-    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "localhost", 15,40)
+    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "ex:192.168.1.12", 15,40, True)
     port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
-    
+
     showTextBox(ip_box)
     showTextBox(port_box)
 
@@ -321,7 +320,6 @@ def main():
     # set up pygame
     pygame.init()
 
-    
 
     fonts['ui'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 30)
     fonts['sm'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 16)

@@ -99,7 +99,7 @@ class newSprite(pygame.sprite.Sprite):
 
 
 class newTextBox(pygame.sprite.Sprite):
-    def __init__(self, text, xpos, ypos, width, case, maxLength, fontSize):
+    def __init__(self, text, xpos, ypos, width, case, maxLength, fontSize, isLabel=False):
         pygame.sprite.Sprite.__init__(self)
         self.text = text
         self.width = width
@@ -115,6 +115,7 @@ class newTextBox(pygame.sprite.Sprite):
         self.fontColour = pygame.Color("black")
         self.initialColour = (180, 180, 180)
         self.font = pygame.font.Font(self.fontFace, fontSize)
+        self.isLabel = isLabel
         self.rect.topleft = [xpos, ypos]
         newSurface = self.font.render(self.text, True, self.fontColour)
         self.image.blit(newSurface, [10, 5])
@@ -137,10 +138,14 @@ class newTextBox(pygame.sprite.Sprite):
             updateDisplay()
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
+                    if self.isLabel:
+                        self.clear()
+                        self.text = ""
+                        self.isLabel = False
                     if event.key == pygame.K_RETURN:
                         self.cursor_visible = False
                         self.clear()
-                        return self.text, event.key
+                        return self.text, event.keyz
                     elif event.key == pygame.K_TAB:
                         self.cursor_visible = False
                         self.clear()
@@ -586,8 +591,8 @@ def waitPress():
     return thisevent.key
 
 
-def makeTextBox(xpos, ypos, width, case=0, startingText="Please type here", maxLength=0, fontSize=22):
-    thisTextBox = newTextBox(startingText, xpos, ypos, width, case, maxLength, fontSize)
+def makeTextBox(xpos, ypos, width, case=0, text="Please type here", maxLength=0, fontSize=22, isLabel=False):
+    thisTextBox = newTextBox(text, xpos, ypos, width, case, maxLength, fontSize, isLabel)
     textboxGroup.add(thisTextBox)
     return thisTextBox
 
