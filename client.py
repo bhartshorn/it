@@ -311,8 +311,9 @@ def port_prompt():
             connect_button.changeImage(1)
             return str(ip_entry), int(port_entry)
         port_entry, key = port_box.update()
-        if key == pygame.K_RETURN or pygame.MOUSEBUTTONDOWN:
+        if key == pygame.K_RETURN or key == pygame.MOUSEBUTTONDOWN:
             connect_button.changeImage(1)
+            showSprite(connect_button)
             return str(ip_entry), int(port_entry)
 
 def main():
