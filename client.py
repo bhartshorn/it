@@ -305,10 +305,10 @@ def port_prompt():
     port_entry = int(port_box.text)
 
     while True:
-        ip_entry, key = ip_box.update(connect_button)
+        ip_entry, key = ip_box.update()
         if key == pygame.MOUSEBUTTONDOWN:
             return str(ip_entry), int(port_entry)
-        port_entry, key = port_box.update(connect_button)
+        port_entry, key = port_box.update()
         if key == pygame.K_RETURN or pygame.MOUSEBUTTONDOWN:
             return str(ip_entry), int(port_entry)
 

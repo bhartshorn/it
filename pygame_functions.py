@@ -129,7 +129,7 @@ class newTextBox(pygame.sprite.Sprite):
         self.cursor_ms_counter = 0
 
 
-    def update(self, sprite):
+    def update(self):
         global keydict
         returnVal=None
         self.cursor_visible = True
