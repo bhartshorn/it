@@ -290,7 +290,7 @@ def port_prompt():
     port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular")
     showLabel(port_label)
 
-    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "ex:192.168.1.12", 15,40, True)
+    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "localhost", 15,40, False)
     port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
 
     showTextBox(ip_box)
