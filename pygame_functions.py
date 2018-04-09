@@ -129,14 +129,21 @@ class newTextBox(pygame.sprite.Sprite):
         self.cursor_ms_counter = 0
 
 
-    def update(self):
+    def update(self, sprite):
         global keydict
         returnVal=None
         self.cursor_visible = True
+        
         while True:
             self.cursorUpdate()
             updateDisplay()
             for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    x,y = pygame.mouse.get_pos()
+                    if (x >= 315 and x <= 415) and (y >= 190 and y <= 230):
+                        self.cursor_visible = False
+                        self.clear()
+                        return self.text, pygame.MOUSEBUTTONDOWN
                 if event.type == pygame.KEYDOWN:
                     if self.isLabel:
                         self.clear()
@@ -159,6 +166,7 @@ class newTextBox(pygame.sprite.Sprite):
                     pygame.quit()
                     sys.exit()
 
+                
             self.image.fill((255, 255, 255))
             pygame.draw.rect(self.image, (0, 0, 0), [0, 0, self.width - 1, self.boxSize - 1], 2)
             newSurface = self.font.render(self.text, True, self.fontColour)

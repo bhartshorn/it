@@ -274,7 +274,7 @@ def game_loop(screen, send_q, recv_q):
 
 def port_prompt():
     screen_width = 450
-    screen_height = 185
+    screen_height = 235
     screen = screenSize(screen_width, screen_height)
     setBackgroundColour(colors["bg_menu"])
     
@@ -296,10 +296,20 @@ def port_prompt():
     showTextBox(ip_box)
     showTextBox(port_box)
 
+    connect_button = newSprite("connect_button.png")
+    connect_button.move(315, 190)
+    showSprite(connect_button)
+
+    #set default values
+    ip_entry = str(ip_box.text)
+    port_entry = int(port_box.text)
+
     while True:
-        ip_entry, key = ip_box.update()
-        port_entry, key = port_box.update()
-        if key == pygame.K_RETURN:
+        ip_entry, key = ip_box.update(connect_button)
+        if key == pygame.MOUSEBUTTONDOWN:
+            return str(ip_entry), int(port_entry)
+        port_entry, key = port_box.update(connect_button)
+        if key == pygame.K_RETURN or pygame.MOUSEBUTTONDOWN:
             return str(ip_entry), int(port_entry)
 
 def main():
