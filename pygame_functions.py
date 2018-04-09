@@ -153,7 +153,7 @@ class newTextBox(pygame.sprite.Sprite):
                         self.cursor_visible = False
                         self.clear()
                         return self.text, event.key
-                    elif event.key == pygame.K_TAB:
+                    elif event.key == pygame.K_TAB or event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         self.cursor_visible = False
                         self.clear()
                         return self.text, event.key
