@@ -297,6 +297,7 @@ def port_prompt():
     showTextBox(port_box)
 
     connect_button = newSprite("connect_button.png")
+    connect_button.addImage("connect_button2.png")
     connect_button.move(315, 190)
     showSprite(connect_button)
 
@@ -307,9 +308,11 @@ def port_prompt():
     while True:
         ip_entry, key = ip_box.update()
         if key == pygame.MOUSEBUTTONDOWN:
+            connect_button.changeImage(1)
             return str(ip_entry), int(port_entry)
         port_entry, key = port_box.update()
         if key == pygame.K_RETURN or pygame.MOUSEBUTTONDOWN:
+            connect_button.changeImage(1)
             return str(ip_entry), int(port_entry)
 
 def main():
