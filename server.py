@@ -189,7 +189,7 @@ def main():
     t = threading.Thread(target=update_clients, args=(client_sockets, players))
     threads.append(t)
     t.start()
-    print("Waiting on Client...")
+    print "Waiting for client on port:",port,"..."
     while not quit:
         try:
             (client_sock, address) = server_sock.accept()

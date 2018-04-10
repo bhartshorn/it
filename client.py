@@ -283,7 +283,7 @@ def port_prompt():
     showLabel(intro_label)
     
 
-    ip_label = makeLabel("IP Address:", 40, 19, 75, "white", "LiberationsSansRegular")
+    ip_label = makeLabel("Server IP:", 40, 19, 75, "white", "LiberationsSansRegular")
     showLabel(ip_label)
 
 
