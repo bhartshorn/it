@@ -1,9 +1,10 @@
 import time
+import random
 
 AREA_WIDTH = 59
 AREA_HEIGHT = 59
 
-class Player:
+class Player():
     player_id = -1
     has_ball = False
     lost_ball_time = 0
@@ -19,6 +20,7 @@ class Player:
     def __init__ (self, id):
         self.player_id = id
         self.player_char = str(id)
+        self.player_color = random.randint(1, 8)
 
     def move(self, input):
         #if (len(command) != 3 or command[2] == "" or command[1] != self.player_id):
