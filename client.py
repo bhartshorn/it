@@ -368,8 +368,8 @@ def main():
 
     if args.ip:
         ip = args.ip
-    #else:
-        #ip, port = port_prompt()
+    else:
+        ip, port = port_prompt()
 
     # set up pygame
     pygame.init()
