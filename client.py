@@ -34,6 +34,27 @@ colors = {'1':              pygame.Color("#5BB668"),
 # To be populated in main()
 fonts = {}
 
+class flashingCursor():
+    def __init__(self, font, color, flashrate, pos):
+        self.pos = pos
+        self.font = font
+        self.color = color
+
+        self.flashrate = flashrate
+        self.halfrate = self.flashrate / 2
+        self.frame = 0
+
+        self.cursor_text = self.font.render('|', 1, self.color)
+
+    def draw(self, surface):
+        if self.frame < self.halfrate:
+            surface.blit(self.cursor_text, (self.pos[0], self.pos[1]))
+
+        self.frame = (self.frame + 1) % self.flashrate
+
+    def move(self, newpos):
+        self.pos = newpos
+
 class NetworkThread(threading.Thread):
     recv_buf = ""
 
@@ -88,9 +109,14 @@ def color_menu(screen, name, color_index, clock, send_q):
     color_buttons = []
     font_height = fonts['sm'].get_height()
 
-    text_box = pygame.Surface((200, font_height + 20))
+    text_box = pygame.Surface((200, font_height + 24))
     text_box.fill(colors['white'])
-    pygame.draw.rect(text_box, colors['bg_menu'], [3, 3, 194, font_height + 14])
+    pygame.draw.rect(text_box, colors['bg_menu'], [3, 3, 194, font_height + 18])
+
+    name_label = fonts['ui'].render('name:', True, colors['scores_border'])
+    name_label_width = name_label.get_width()
+
+    cursor = flashingCursor(fonts['ui'], colors['white'], 10, (0, 0))
 
     for i in range(1, 9):
         index = str(i)
@@ -118,6 +144,9 @@ def color_menu(screen, name, color_index, clock, send_q):
                     name = name + pygame.key.name(event.key)
                 elif event.key == pygame.K_BACKSPACE and len(name) >= 0:
                     name = name[:-1]
+                elif event.key == pygame.K_RETURN:
+                    send_q.append("c:{}:{}:{}\n".format(my_id, name, color_index))
+                    close = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if save_button.test_mouse(event.pos):
@@ -142,12 +171,14 @@ def color_menu(screen, name, color_index, clock, send_q):
             button.draw(screen)
 
         # Render text box
-        name_label = fonts['ui'].render('name:', True, colors['scores_border'])
         name_text = fonts['ui'].render(name, True, colors['white'])
 
+        cursor.move((230 + name_label_width + name_text.get_width() + 14, 185))
+
         screen.blit(name_label, (230, 185))
-        screen.blit(text_box, (230 + name_label.get_width() + 8, 183))
-        screen.blit(name_text, (230 + name_label.get_width() + 12, 185))
+        screen.blit(text_box, (230 + name_label_width + 8, 183))
+        screen.blit(name_text, (230 + name_label_width + 14, 185))
+        cursor.draw(screen)
 
         pygame.display.update()
         clock.tick(10)
@@ -328,8 +359,8 @@ def main():
 
     if args.ip:
         ip = args.ip
-    else:
-        ip, port = port_prompt()
+    #else:
+        #ip, port = port_prompt()
 
     # set up pygame
     pygame.init()
