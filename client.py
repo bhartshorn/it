@@ -147,6 +147,8 @@ def color_menu(screen, name, color_index, clock, send_q):
                 elif event.key == pygame.K_RETURN:
                     send_q.append("c:{}:{}:{}\n".format(my_id, name, color_index))
                     close = True
+                elif event.key == pygame.K_ESCAPE:
+                    close = True
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 if save_button.test_mouse(event.pos):
