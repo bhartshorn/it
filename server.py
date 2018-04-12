@@ -40,13 +40,13 @@ class ClientThread(threading.Thread):
         self.address = address
         self.id = id
         self.recv_q = deque()
-        self.recv_buf = ""
+        self.recv_buf = b''
         self.quit = False
 
     def recieve(self):
         # TODO: try-catch
         try:
-            buffer = self.recv_buf + self.sock.recv(2048)
+            buffer = self.recv_buf.decode() + self.sock.recv(2048).decode()
         except socket.timeout as msg:
             return True
         except socket.error as msg:
@@ -55,8 +55,8 @@ class ClientThread(threading.Thread):
         if len(buffer) == 0:
             return True
 
-        self.recv_buf = ""
-        split = string.split(buffer)
+        self.recv_buf = b''
+        split = buffer.split()
         if (buffer[-1] != "\n"):
             self.recv_buf = split[-1]
             del split[-1]
@@ -103,7 +103,7 @@ class ClientThread(threading.Thread):
                 self.close()
 
             while len(self.recv_q) > 0:
-                input = string.split(self.recv_q.popleft(), ":")
+                input = self.recv_q.popleft().split(":")
                 if input[0] == "q":
                     self.close()
                 elif input[0] == "m":
@@ -124,8 +124,8 @@ def update_clients(client_sockets, players):
         time.sleep(0.01)
 
         # Send player statuses to clients
-        for i, p in players.viewitems():
-            for j, s in client_sockets.viewitems():
+        for i, p in players.items():
+            for j, s in client_sockets.items():
                 try:
                     s.send(p.to_network().encode('utf-8'))
                 except socket.error as msg:
@@ -140,7 +140,7 @@ def update_clients(client_sockets, players):
         p_loc_x = -1
         p_loc_y = -1
 
-        for i, p in players.viewitems():
+        for i, p in players.items():
             if p.has_ball:
                 player_with_ball = p.player_id
                 p_loc_x = p.loc_x
@@ -155,7 +155,7 @@ def update_clients(client_sockets, players):
                     p_loc_y = players[key].loc_y
                     break
 
-        for i, p in players.viewitems():
+        for i, p in players.items():
             if (not i == player_with_ball) and p.loc_x == p_loc_x and p.loc_y == p_loc_y:
                 if p.give_ball() == True:
                     players[player_with_ball].take_ball()
@@ -189,13 +189,13 @@ def main():
     t = threading.Thread(target=update_clients, args=(client_sockets, players))
     threads.append(t)
     t.start()
-    print "Waiting for client on port:",port,"..."
+    print("Waiting for client on port: ", port, "...")
     while not quit:
         try:
             (client_sock, address) = server_sock.accept()
-        except socket.timeout, err:
+        except socket.timeout as err:
             pass
-        except IOError, err:
+        except IOError as err:
             # Error "Interrupted system call" should make program quit
             if err.errno and err.errno == 4:
                 quit = True

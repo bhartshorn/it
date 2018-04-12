@@ -56,7 +56,7 @@ class flashingCursor():
         self.pos = newpos
 
 class NetworkThread(threading.Thread):
-    recv_buf = ""
+    recv_buf = b''
 
     def __init__(self, sock, send_q, recv_q):
         threading.Thread.__init__(self)
@@ -78,26 +78,27 @@ class NetworkThread(threading.Thread):
     def send(self):
         while len(self.send_q) > 0:
             try:
-                self.sock.send(self.send_q.popleft())
+                self.sock.send(self.send_q.popleft().encode())
             except socket.error as msg:
                 print("Could not send, ", msg)
 
     def recieve(self):
         try:
-            buffer = self.recv_buf + self.sock.recv(2048)
+            buffer = self.recv_buf.decode() + self.sock.recv(2048).decode()
         except socket.error as msg:
             print("Could not receive, ", msg)
         if len(buffer) == 0:
             return
 
-        self.recv_buf = ""
-        split = string.split(buffer)
+        self.recv_buf = b''
+        split = buffer.split()
         if (buffer[-1] != "\n"):
             self.recv_buf = split[-1]
             del split[-1]
 
         for field in split:
             self.recv_q.append(field)
+        #print(self.recv_q)
 
 def color_menu(screen, name, color_index, clock, send_q):
     menu_width = 400
@@ -254,7 +255,8 @@ def game_loop(screen, send_q, recv_q):
             send_q.append("m:{}:d\n".format(my_id))
 
         while len(recv_q) > 0:
-            command = string.split(recv_q.popleft(), ":")
+            command = recv_q.popleft().split(":")
+            #print(command)
             if command[0] == "q":
                 quit = True
             elif command[0] == "i":
@@ -268,7 +270,7 @@ def game_loop(screen, send_q, recv_q):
 
         score_y = font_offset
 
-        for i, p in players.viewitems():
+        for i, p in players.items():
             # Draw player on screen
             if (p.has_ball):
                 draw_x = (p.loc_x * circle_radius)
@@ -384,7 +386,6 @@ def main():
     network_thread.start()
 
     game_loop(game_window, send_q, recv_q)
-    #curses.wrapper(game_loop, send_q, recv_q)
 
     sock.close()
 
