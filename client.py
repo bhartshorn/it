@@ -101,6 +101,10 @@ class NetworkThread(threading.Thread):
         #print(self.recv_q)
 
 def color_menu(screen, name, color_index, clock, send_q):
+    #bg = screen.copy()
+    bg = pygame.transform.smoothscale(screen, (200, 150))
+    bg = pygame.transform.smoothscale(bg, (800, 600))
+
     menu_width = 400
     menu_height = 350
     menu_surface = pygame.Surface((menu_width, menu_height))
@@ -124,10 +128,10 @@ def color_menu(screen, name, color_index, clock, send_q):
         n = i - 1
 
         col = n % 4
-        row = n / 4
+        row = n // 4
 
-        x_pos = (col * 70 + col * 20) + 230
-        y_pos = ((n / 4) * 90) + 260
+        x_pos = (col * 90) + 230
+        y_pos = (row * 90) + 260
         color_buttons.append(buttons.ColorButton(colors[index], (x_pos, y_pos)))
 
     color_buttons[color_index - 1].clicked = True
@@ -167,6 +171,7 @@ def color_menu(screen, name, color_index, clock, send_q):
                     button.test_mouse(event.pos)
 
 
+        screen.blit(bg, (0, 0))
         screen.blit(menu_surface, (200, 150))
         save_button.draw(screen)
 
@@ -226,8 +231,6 @@ def game_loop(screen, send_q, recv_q):
     global my_id
 
     while not quit:
-        screen.fill(bg_play)
-        scores_surface.fill(bg_scores)
         command = ""
 
         for event in pygame.event.get():
@@ -269,6 +272,8 @@ def game_loop(screen, send_q, recv_q):
                 players[p_id].parse_network(command)
 
         score_y = font_offset
+        screen.fill(bg_play)
+        scores_surface.fill(bg_scores)
 
         for i, p in players.items():
             # Draw player on screen
