@@ -64,7 +64,7 @@ class NetworkThread(threading.Thread):
         self.send_q = send_q
         self.recv_q = recv_q
 
-def run(self):
+    def run(self):
         global quit
         while not quit:
             readable, w, e = select.select([self.sock], [], [], 10)
