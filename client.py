@@ -292,12 +292,10 @@ def game_loop(screen, send_q, recv_q):
                 gfxdraw.aacircle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
                 gfxdraw.filled_circle(screen, draw_x, draw_y, circle_radius_inner, bg_play)
 
-
             # Draw player's score
             scores_surface.blit(fonts['ui'].render(p.player_char, True, colors[str(p.player_color)]), (score_x, score_y))
             score = fonts['ui'].render(str(p.num_points), True, colors['white'])
             scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
-
 
             #update score y loc
             score_y = score_y + font_offset
@@ -317,21 +315,19 @@ def port_prompt():
     screen_height = 235
     screen = screenSize(screen_width, screen_height)
     setBackgroundColour(colors["bg_menu"])
-    
-    pygame.draw.rect(screen, (211,211,211), [0, 0, screen_width - 1, screen_height - 1], 2)
+
+    pygame.draw.rect(screen, (211, 211, 211), [0, 0, screen_width - 1, screen_height - 1], 2)
     intro_label = makeLabel("Welcome to \"IT\"", 40, 19, 22, "white", "LiberationsSansRegular")
     showLabel(intro_label)
-    
 
     ip_label = makeLabel("Server IP:", 40, 19, 75, "white", "LiberationsSansRegular")
     showLabel(ip_label)
 
-
     port_label = makeLabel("Port:", 40, 19, 120, "white", "LiberationsSansRegular")
     showLabel(port_label)
 
-    ip_box = makeTextBox(195, 70, screen_width / 2 ,0, "localhost", 15,40, False)
-    port_box = makeTextBox(195, 125, screen_width / 2 ,0, "11000", 10,40)
+    ip_box = makeTextBox(195, 70, screen_width / 2, 0, "localhost", 15, 40, False)
+    port_box = makeTextBox(195, 125, screen_width / 2, 0, "11000", 10, 40)
 
     showTextBox(ip_box)
     showTextBox(port_box)
@@ -356,6 +352,7 @@ def port_prompt():
             showSprite(connect_button)
             return str(ip_entry), int(port_entry)
 
+
 def main():
     global fonts
 
@@ -374,7 +371,6 @@ def main():
     # set up pygame
     pygame.init()
 
-
     fonts['ui'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 30)
     fonts['sm'] = pygame.font.Font('resources/fonts/LiberationSans-Regular.ttf', 16)
 
@@ -382,7 +378,7 @@ def main():
 
     # set up the socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #TODO: Attempt connecting on higher ports automatically -- The Unix Way?
+    # TODO: Attempt connecting on higher ports automatically -- The Unix Way?
     sock.connect((ip, port))
 
     send_q = deque()
