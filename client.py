@@ -1,7 +1,5 @@
 import socket
-import string
 import select
-import time
 import threading
 import argparse
 import pygame
