@@ -34,6 +34,7 @@ colors = {'1':              pygame.Color("#5BB668"),
 # To be populated in main()
 fonts = {}
 
+
 class flashingCursor():
     def __init__(self, font, color, flashrate, pos):
         self.pos = pos
@@ -55,6 +56,7 @@ class flashingCursor():
     def move(self, newpos):
         self.pos = newpos
 
+
 class NetworkThread(threading.Thread):
     recv_buf = b''
 
@@ -64,11 +66,10 @@ class NetworkThread(threading.Thread):
         self.send_q = send_q
         self.recv_q = recv_q
 
-
-    def run(self):
+def run(self):
         global quit
         while not quit:
-            readable, w, e = select.select([self.sock],[],[],10)
+            readable, w, e = select.select([self.sock], [], [], 10)
             if len(readable) > 0:
                 self.recieve()
 
@@ -98,10 +99,11 @@ class NetworkThread(threading.Thread):
 
         for field in split:
             self.recv_q.append(field)
-        #print(self.recv_q)
+        # print(self.recv_q)
+
 
 def color_menu(screen, name, color_index, clock, send_q):
-    #bg = screen.copy()
+    # bg = screen.copy()
     bg = pygame.transform.smoothscale(screen, (200, 150))
     bg = pygame.transform.smoothscale(bg, (800, 600))
 
@@ -170,7 +172,6 @@ def color_menu(screen, name, color_index, clock, send_q):
                 for button in color_buttons:
                     button.test_mouse(event.pos)
 
-
         screen.blit(bg, (0, 0))
         screen.blit(menu_surface, (200, 150))
         save_button.draw(screen)
@@ -191,10 +192,11 @@ def color_menu(screen, name, color_index, clock, send_q):
         pygame.display.update()
         clock.tick(10)
 
+
 def game_loop(screen, send_q, recv_q):
     global quit
-    #global lib_sans_small 
-    #global lib_sans
+    # global lib_sans_small 
+    # global lib_sans
     clock = pygame.time.Clock()
 
     # Set up play area surface
@@ -208,7 +210,7 @@ def game_loop(screen, send_q, recv_q):
     score_x = 12
 
     # Set up font for scores
-    #lib_sans = pygame.font.SysFont('Liberation Sans', 30)
+    #l ib_sans = pygame.font.SysFont('Liberation Sans', 30)
     font_height = fonts['ui'].get_height()
     font_offset = font_height + 5
 
@@ -218,7 +220,7 @@ def game_loop(screen, send_q, recv_q):
     fonts['ui'].set_underline(False)
     offset_scores_header = (200 - scores_header.get_width()) / 2
 
-    #lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
+    # lib_sans_small = pygame.font.SysFont('Liberation Sans', 16)
     color_button = buttons.GuiButton('name/color', fonts['sm'], colors, (650, 500))
     quit_button = buttons.GuiButton('quit', fonts['sm'], colors, (650, 550))
 
@@ -250,7 +252,7 @@ def game_loop(screen, send_q, recv_q):
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_LEFT] or pressed[pygame.K_h]:
             send_q.append("m:{}:l\n".format(my_id))
-        if pressed[pygame.K_RIGHT] or pressed[pygame.K_l]: 
+        if pressed[pygame.K_RIGHT] or pressed[pygame.K_l]:
             send_q.append("m:{}:r\n".format(my_id))
         if pressed[pygame.K_UP] or pressed[pygame.K_k]:
             send_q.append("m:{}:u\n".format(my_id))
@@ -259,7 +261,6 @@ def game_loop(screen, send_q, recv_q):
 
         while len(recv_q) > 0:
             command = recv_q.popleft().split(":")
-            #print(command)
             if command[0] == "q":
                 quit = True
             elif command[0] == "i":
@@ -281,7 +282,12 @@ def game_loop(screen, send_q, recv_q):
                 draw_x = (p.loc_x * circle_radius)
                 draw_y = (p.loc_y * circle_radius)
                 pygame.draw.rect(screen, colors[str(p.player_color)], [draw_x, draw_y, circle_radius * 2, circle_radius * 2])
-                pygame.draw.rect(screen, bg_play, [draw_x + (circle_radius / 2), draw_y + (circle_radius / 2), circle_radius, circle_radius])
+                pygame.draw.rect(screen,
+                        bg_play,
+                        [draw_x + (circle_radius / 2),
+                            draw_y + (circle_radius / 2),
+                            circle_radius,
+                            circle_radius])
             else:
                 draw_x = (p.loc_x * circle_radius) + circle_radius
                 draw_y = (p.loc_y * circle_radius) + circle_radius
@@ -297,7 +303,7 @@ def game_loop(screen, send_q, recv_q):
             score = fonts['ui'].render(str(p.num_points), True, colors['white'])
             scores_surface.blit(score, (200 - score.get_width() - score_x, score_y))
 
-            #update score y loc
+            # update score y loc
             score_y = score_y + font_offset
 
         pygame.draw.line(scores_surface, colors['scores_border'], [0, 0], [0, 600], 5)
@@ -305,10 +311,11 @@ def game_loop(screen, send_q, recv_q):
         screen.blit(scores_surface, (600, 0))
         color_button.draw(screen)
         quit_button.draw(screen)
-        #screen.blit(color_button, (650, 500))
+        # screen.blit(color_button, (650, 500))
         # Refresh the screen
         pygame.display.update()
         clock.tick(15)
+
 
 def port_prompt():
     screen_width = 450
